@@ -309,6 +309,7 @@ textarea.input.short{min-height:84px}
 .cmp-scan{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .cmp-scan .btn{min-height:40px;padding:6px 14px}
 .cmp-scan .hint{margin:0;flex:1 1 180px}
+::placeholder{color:var(--muted);opacity:.65}
 /* currency picker */
 .cur-pick{position:relative}
 .pick-btn{text-align:left;cursor:pointer;color:var(--ink);font:inherit;display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -389,11 +390,11 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <div class="row">
       <div class="field">
         <label class="label" for="vat-amount" id="vat-amount-label">Price before VAT (AED)</label>
-        <input class="input mono" id="vat-amount" type="text" inputmode="decimal" value="1250" autocomplete="off">
+        <input class="input mono" id="vat-amount" type="text" inputmode="decimal" placeholder="1250" data-ex autocomplete="off">
       </div>
       <div class="field">
         <label class="label" for="vat-rate">VAT rate (%)</label>
-        <input class="input mono" id="vat-rate" type="text" inputmode="decimal" value="5" autocomplete="off">
+        <input class="input mono" id="vat-rate" type="text" inputmode="decimal" placeholder="5" data-ex autocomplete="off">
       </div>
     </div>
     <div class="results" aria-live="polite">
@@ -410,7 +411,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <p class="lede">Add a tip, divide by the table, and round up if nobody wants to deal with fils.</p>
     <div class="field">
       <label class="label" for="split-bill">Bill total (AED)</label>
-      <input class="input mono" id="split-bill" type="text" inputmode="decimal" value="480" autocomplete="off">
+      <input class="input mono" id="split-bill" type="text" inputmode="decimal" placeholder="480" data-ex autocomplete="off">
     </div>
     <div class="field">
       <span class="label" id="tip-label">Tip</span>
@@ -451,7 +452,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     </div>
     <div class="field">
       <label class="label" for="unit-value">Amount</label>
-      <input class="input mono" id="unit-value" type="text" inputmode="decimal" value="6" autocomplete="off">
+      <input class="input mono" id="unit-value" type="text" inputmode="decimal" placeholder="6" data-ex autocomplete="off">
     </div>
     <div class="row">
       <div class="field"><label class="label" for="unit-from">From</label><select class="input" id="unit-from"></select></div>
@@ -486,7 +487,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <h3 class="sec-h">Add or subtract days</h3>
       <div class="row">
         <div class="field"><label class="label" for="dt-c">Start date</label><input class="input mono" id="dt-c" type="date"></div>
-        <div class="field"><label class="label" for="dt-n">Days (minus goes back)</label><input class="input mono" id="dt-n" type="number" step="1" value="90"></div>
+        <div class="field"><label class="label" for="dt-n">Days (minus goes back)</label><input class="input mono" id="dt-n" type="number" step="1" placeholder="90" data-ex></div>
       </div>
       <div class="field">
         <span class="label" id="dt-pick-label">Which weekdays</span>
@@ -527,9 +528,9 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <h3 class="sec-h">Percentage of a number</h3>
       <div class="calc-line">
         <span>What is</span>
-        <input class="input mono" id="pc-a" type="text" inputmode="decimal" value="15" aria-label="Percentage" autocomplete="off">
+        <input class="input mono" id="pc-a" type="text" inputmode="decimal" placeholder="15" data-ex aria-label="Percentage" autocomplete="off">
         <span>% of</span>
-        <input class="input mono" id="pc-b" type="text" inputmode="decimal" value="2400" aria-label="Number" autocomplete="off">
+        <input class="input mono" id="pc-b" type="text" inputmode="decimal" placeholder="2400" data-ex aria-label="Number" autocomplete="off">
         <span>?</span>
       </div>
       <div class="results" aria-live="polite">
@@ -539,9 +540,9 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <div class="split-sec">
       <h3 class="sec-h">One number as a share of another</h3>
       <div class="calc-line">
-        <input class="input mono" id="pc-c" type="text" inputmode="decimal" value="36" aria-label="Part" autocomplete="off">
+        <input class="input mono" id="pc-c" type="text" inputmode="decimal" placeholder="36" data-ex aria-label="Part" autocomplete="off">
         <span>is what % of</span>
-        <input class="input mono" id="pc-d" type="text" inputmode="decimal" value="240" aria-label="Whole" autocomplete="off">
+        <input class="input mono" id="pc-d" type="text" inputmode="decimal" placeholder="240" data-ex aria-label="Whole" autocomplete="off">
         <span>?</span>
       </div>
       <div class="results" aria-live="polite">
@@ -552,9 +553,9 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <h3 class="sec-h">Percentage change</h3>
       <div class="calc-line">
         <span>From</span>
-        <input class="input mono" id="pc-e" type="text" inputmode="decimal" value="1800" aria-label="Starting value" autocomplete="off">
+        <input class="input mono" id="pc-e" type="text" inputmode="decimal" placeholder="1800" data-ex aria-label="Starting value" autocomplete="off">
         <span>to</span>
-        <input class="input mono" id="pc-f" type="text" inputmode="decimal" value="2250" aria-label="Ending value" autocomplete="off">
+        <input class="input mono" id="pc-f" type="text" inputmode="decimal" placeholder="2250" data-ex aria-label="Ending value" autocomplete="off">
       </div>
       <div class="results" aria-live="polite">
         <div class="res total"><span class="k">Change</span><span class="num" id="pc-r3">0</span></div>
@@ -564,8 +565,8 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <div class="split-sec">
       <h3 class="sec-h">Margin and markup</h3>
       <div class="row">
-        <div class="field"><label class="label" for="pc-cost">Cost per item (AED)</label><input class="input mono" id="pc-cost" type="text" inputmode="decimal" value="85" autocomplete="off"></div>
-        <div class="field"><label class="label" for="pc-price">Selling price (AED)</label><input class="input mono" id="pc-price" type="text" inputmode="decimal" value="120" autocomplete="off"></div>
+        <div class="field"><label class="label" for="pc-cost">Cost per item (AED)</label><input class="input mono" id="pc-cost" type="text" inputmode="decimal" placeholder="85" data-ex autocomplete="off"></div>
+        <div class="field"><label class="label" for="pc-price">Selling price (AED)</label><input class="input mono" id="pc-price" type="text" inputmode="decimal" placeholder="120" data-ex autocomplete="off"></div>
       </div>
       <div class="results" aria-live="polite">
         <div class="res total"><span class="k">Profit per item</span><span class="num"><span class="unit">AED</span><span id="pc-profit">0</span></span></div>
@@ -582,7 +583,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <p class="lede">AED, USD, PHP, IDR and INR are the main ones, with more in the lists. Rates update by themselves when you are online, and you can type your own to match your exchange house.</p>
     <div class="field">
       <label class="label" for="cur-amount">Amount</label>
-      <input class="input mono" id="cur-amount" type="text" inputmode="decimal" value="1000" autocomplete="off">
+      <input class="input mono" id="cur-amount" type="text" inputmode="decimal" placeholder="1000" data-ex autocomplete="off">
     </div>
     <div class="row">
       <div class="field cur-pick" id="pick-from"><span class="label" id="lbl-from">From</span><select hidden id="cur-from"></select><button type="button" class="input pick-btn" id="pick-from-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lbl-from pick-from-btn"></button><div class="pick-pop" hidden><input type="text" class="input" placeholder="Type a name or code, like peso" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search currencies"><ul class="pick-list" role="listbox"></ul></div></div>
@@ -1669,10 +1670,11 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   };
   var cmpKind = 'weight', cmpUid = 0, cmpLines = [];
   var cmpItems = [
-    { n: '', p: '12.50', k: '1', a: '500', u: 'g' },
-    { n: '', p: '21', k: '1', a: '1', u: 'kg' },
-    { n: '', p: '14.90', k: '3', a: '200', u: 'g' }
+    { n: '', p: '', k: '', a: '', u: 'g', ex: ['12.50', '1', '500'] },
+    { n: '', p: '', k: '', a: '', u: 'kg', ex: ['21', '1', '1'] },
+    { n: '', p: '', k: '', a: '', u: 'g', ex: ['14.90', '3', '200'] }
   ];
+  var CMP_EX = ['10.00', '1', '500'];
   function cmpName(it, i) { return it.n.trim() || 'Item ' + String.fromCharCode(65 + i); }
   function cmpFactor(u) {
     var l = CMP[cmpKind].units;
@@ -1680,7 +1682,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     return 1;
   }
   function cmpBase(it) {
-    var total = num(it.k) * num(it.a) * cmpFactor(it.u), price = num(it.p);
+    var total = (String(it.k).trim() === '' ? 1 : num(it.k)) * num(it.a) * cmpFactor(it.u), price = num(it.p);
     return total > 0 && price > 0 ? price / total : null;
   }
   function cmpInput(val, mode, ph) {
@@ -1713,10 +1715,10 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       rm.disabled = cmpItems.length <= 2;
       head.appendChild(name); head.appendChild(rm);
       var g1 = document.createElement('div'); g1.className = 'cmp-grid';
-      var price = cmpInput(it.p, 'decimal'), packs = cmpInput(it.k, 'decimal');
-      g1.appendChild(cmpField('Price (AED)', price)); g1.appendChild(cmpField('Number of packs (in this price)', packs));
+      var ex = it.ex || CMP_EX, price = cmpInput(it.p, 'decimal', ex[0]), packs = cmpInput(it.k, 'decimal', ex[1]);
+      g1.appendChild(cmpField('Price (AED)', price)); g1.appendChild(cmpField('Number of packs (blank is 1)', packs));
       var g2 = document.createElement('div'); g2.className = 'cmp-grid';
-      var amount = cmpInput(it.a, 'decimal');
+      var amount = cmpInput(it.a, 'decimal', ex[2]);
       var unit = document.createElement('select'); unit.className = 'input'; unit.id = 'cmp-' + (++cmpUid);
       CMP[cmpKind].units.forEach(function (u) {
         var o = document.createElement('option'); o.value = u[0]; o.textContent = u[0];
@@ -1760,7 +1762,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     var box = $('#cmp-results');
     box.textContent = '';
     var note = $('#cmp-note');
-    if (ranked.length < 2) { note.textContent = 'Fill in at least two items to compare them.'; return; }
+    if (ranked.length < 2) { note.textContent = 'Fill in at least two items to compare them. The grey numbers are only examples.'; return; }
     ranked.sort(function (a, b) { return a.base - b.base; });
     var best = ranked[0].base, worst = ranked[ranked.length - 1].base;
     ranked.forEach(function (r) {
@@ -1892,7 +1894,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   }
   $('#cmp-add').addEventListener('click', function () {
     if (cmpItems.length >= 6) return;
-    cmpItems.push({ n: '', p: '', k: '1', a: '', u: CMP[cmpKind].defU });
+    cmpItems.push({ n: '', p: '', k: '', a: '', u: CMP[cmpKind].defU });
     cmpBuild();
     var names = $$('#cmp-items .cmp-head input');
     if (names.length) names[names.length - 1].focus();
@@ -1985,6 +1987,18 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   $('#ck-new').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ckAdd(); } });
   $('#ck-clear-done').addEventListener('click', function () { ckItems = ckItems.filter(function (x) { return !x.d; }); ckSave(); ckRender(); });
   $('#ck-clear-all').addEventListener('click', function () { ckItems = []; ckSave(); ckRender(); });
+
+  // A field left empty uses its grey example, so tools always show a result and nobody has to delete text first.
+  (function () {
+    var d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    $$('input[data-ex]').forEach(function (el) {
+      Object.defineProperty(el, 'value', {
+        configurable: true,
+        get: function () { var v = d.get.call(el); return String(v).trim() === '' ? el.placeholder : v; },
+        set: function (v) { d.set.call(el, v); }
+      });
+    });
+  })();
 
   renderVat(); renderSplit(); fillUnitSelects(); renderUnits(); initDates(); renderPercent(); fillCurrency(); renderCurrency(); loadRates(); renderQR(); initTime(); renderCalc(); cmpBuild(); ckRender(); renderPassword();
   var saved = null;
