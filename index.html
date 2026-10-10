@@ -322,6 +322,12 @@ textarea.input.short{min-height:84px}
 .pick-list li.pick-h{cursor:default;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;padding:8px 10px 2px}
 .pick-list li.pick-h:hover{background:transparent}
 .pick-list li.none{cursor:default;color:var(--muted)}
+/* pun names */
+.pn-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.pn-item{display:grid;grid-template-columns:minmax(0,1fr) 44px auto;gap:8px;align-items:center;border:1px solid var(--line);background:var(--field);border-radius:8px;padding:4px 4px 4px 12px}
+.pn-name{font-weight:600;overflow-wrap:anywhere}
+.pn-btn{min-height:40px}
+.pn-copy{width:auto;padding:0 12px;font-size:.85rem}
 /* checklist */
 .ck-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
 .ck-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
@@ -377,6 +383,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <button class="tab" role="tab" id="tab-calc" data-tab="calc" aria-selected="false" aria-controls="panel-calc">Calculator</button>
     <button class="tab" role="tab" id="tab-currency" data-tab="currency" aria-selected="false" aria-controls="panel-currency">Currency</button>
     <button class="tab" role="tab" id="tab-list" data-tab="list" aria-selected="false" aria-controls="panel-list">Checklist</button>
+    <button class="tab" role="tab" id="tab-pun" data-tab="pun" aria-selected="false" aria-controls="panel-pun">Pun names</button>
   </div>
 
   <!-- VAT -->
@@ -752,6 +759,24 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     </div>
   </section>
 
+  <!-- Pun names -->
+  <section class="panel" id="panel-pun" role="tabpanel" aria-labelledby="tab-pun" hidden>
+    <h2>Pun name maker</h2>
+    <p class="lede">Pick a theme, add a word if you like, and get punny business or product names. Tap the star to keep the ones you like.</p>
+    <div class="chips" id="pn-themes" role="group" aria-label="Theme"></div>
+    <div class="ck-add">
+      <input type="text" class="input" id="pn-word" placeholder="A word to build on (optional), like plush" aria-label="A word to build on" autocomplete="off">
+      <button type="button" class="btn primary" id="pn-go">Make names</button>
+    </div>
+    <ul class="pn-list" id="pn-list"></ul>
+    <p class="hint">The names come from ready-made wordplay for each theme, so some will fit better than others. Tap Make names again for a fresh set.</p>
+    <div class="split-sec" id="pn-saved-wrap" hidden>
+      <h3 class="sec-h">Saved</h3>
+      <ul class="pn-list" id="pn-saved"></ul>
+      <div class="btns"><button type="button" class="btn" id="pn-clear">Clear saved</button></div>
+    </div>
+  </section>
+
   <!-- Password -->
   <section class="panel" id="panel-password" role="tabpanel" aria-labelledby="tab-password" hidden>
     <h2>Password generator</h2>
@@ -811,7 +836,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   }
 
   /* ---------- Tabs ---------- */
-  var names = ['split', 'units', 'dates', 'percent', 'qr', 'time', 'password', 'compare', 'vat', 'calc', 'currency', 'list'];
+  var names = ['split', 'units', 'dates', 'percent', 'qr', 'time', 'password', 'compare', 'vat', 'calc', 'currency', 'list', 'pun'];
   var tabs = $$('.tab'), panels = $$('.panel');
   function show(name) {
     tabs.forEach(function (t) {
@@ -1954,6 +1979,163 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   $('#pw-copy').addEventListener('click', function () { copyText($('#pw-out').value, this, $('#pw-out')); });
 
   /* ---------- Boot ---------- */
+  /* ---------- Pun names ---------- */
+  var PUN = {
+    cats: { label: 'Cats & plush',
+      adj: ['Purrfect', 'Pawsome', 'Pawsitively', 'Meowvelous', 'Fur-ever', 'Purr-sonal', 'Cat-tastic', 'Fluffy'],
+      puns: ['Purrfect', 'Pawsitively', 'Meowvelous', 'Fur-ever', 'Pawsome', 'Catitude', 'Fur Real', 'Purrsonal', 'Meow-gic', 'Claws for Celebration', 'Whisker Wonders', 'Fluff Life', 'Fur-tune', 'Paws & Reflect', 'Pur-fection', 'Cat-ch of the Day', 'Hiss-terical', 'Feline Fine'],
+      tails: ['& Paws', 'by Meow', 'Purr-fection', 'Fur-ever', 'Cuddles', 'Whiskers'],
+      nouns: ['Plush Co.', 'Stitch Studio', 'Cuddle Club', 'Fluff Factory', 'Snuggle Shop', 'Cat Lab', 'Plushies', 'Paw Parlour'],
+      swaps: [['perfect', 'purrfect'], ['positive', 'pawsitive'], ['awesome', 'pawsome'], ['marvel', 'meowvel'], ['personal', 'purr-sonal'], ['forever', 'fur-ever'], ['per', 'purr'], ['pos', 'paws'], ['pur', 'purr'], ['for', 'fur'], ['mem', 'meow'], ['mew', 'meow'], ['cause', 'claws'], ['tail', 'tail'], ['hair', 'fur'], ['fun', 'fur']] },
+    dogs: { label: 'Dogs & pets',
+      adj: ['Pawsome', 'Bark-tastic', 'Fur-ever', 'Pup-ular', 'Woof-derful', 'Doggone', 'Paw-sitive'],
+      puns: ['Pawsome', 'Bark-ain', 'Fur Real', 'Fetch-ing', 'Tail-wagging', 'Paws for Thought', 'Woof Woof', 'Doggone Good', 'Bone Appetit', 'Hot Diggity', 'Leash Resistance', 'Good Boy', 'Sit Happens', 'Treat Yourself', 'Pup-ular', 'Pet-tastic'],
+      tails: ['& Paws', 'Pals', 'Pawty', 'Fur-ever Friends', 'Tails'],
+      nouns: ['Pet Co.', 'Pup Parlour', 'Paw Shop', 'Grooming Lounge', 'Dog House', 'Kennel Club', 'Pet Palace'],
+      swaps: [['pos', 'paws'], ['for', 'fur'], ['bar', 'bark'], ['bone', 'bone'], ['treat', 'treat'], ['per', 'purr']] },
+    travel: { label: 'Travel',
+      adj: ['Tour-ific', 'Trip-tastic', 'Jet-Set', 'Sky-High', 'Wander-ful', 'Globe-Trotting', 'Plane Awesome'],
+      puns: ['Jet Set', 'Wanderlust', 'Plane Awesome', 'Visa Versa', 'Passport to Fun', 'Take Me Away', 'Tour-ific', 'Globe Trotting', 'Pack It Up', 'Boarding Pass', 'Fare Enough', 'Sky High', 'Roam Sweet Roam', 'Bon Voyage', 'Trip-tastic', 'Fly Me Away', 'Plane & Simple', 'Suitcase of Dreams'],
+      tails: ['Getaways', '& Go', 'Escapes', 'Voyages', 'Adventures', 'Travels'],
+      nouns: ['Travel Co.', 'Tours', 'Getaways', 'Holidays', 'Voyage Club', 'Journeys', 'Escapes'],
+      swaps: [['fair', 'fare'], ['plane', 'plane'], ['pass', 'pass'], ['tour', 'tour-ific'], ['fly', 'fly'], ['roam', 'roam'], ['trip', 'trip']] },
+    food: { label: 'Food',
+      adj: ['Dough-licious', 'Egg-cellent', 'Souper', 'Yum-tastic', 'Berry Good', 'Grate', 'Sweet'],
+      puns: ['Lettuce Eat', 'Pita Pan', 'Thyme Out', 'Olive You', 'Bread Winners', 'Dough-licious', 'Wok This Way', 'Mint to Be', 'Grate Expectations', 'Taco Bout It', 'Relish the Moment', 'Berry Good', 'Pasta la Vista', 'Naan of Your Business', 'Falafel Way', 'Souper Duper', 'Egg-cellent', 'Bun Intended'],
+      tails: ['Eats', 'Bites', 'Kitchen', '& Spice', 'Feast', 'Bistro'],
+      nouns: ['Kitchen', 'Bistro', 'Eatery', 'Cafe', 'Grill', 'Bakery', 'Table'],
+      swaps: [['let', 'lettuce'], ['time', 'thyme'], ['love', 'olive'], ['bread', 'bread'], ['great', 'grate'], ['pita', 'pita'], ['no', 'naan'], ['sup', 'soup'], ['egg', 'egg']] },
+    coffee: { label: 'Coffee',
+      adj: ['Brew-tiful', 'Brew-tastic', 'Bean-tastic', 'Perk-y', 'Mocha', 'Latte'],
+      puns: ['Bean There', 'Brew-tiful', 'Espresso Yourself', 'Mocha Difference', 'Latte Love', 'Grounds for Celebration', 'Daily Grind', 'Cuppa Joy', 'Perk Up', 'Steam & Dream', 'Roast Coast', 'Half Caf', 'Brew Crew', 'Java Jive', 'Mug Shot', 'Bean Appetit'],
+      tails: ['Roasters', 'Brew Co.', '& Beans', 'Cafe', 'Grounds'],
+      nouns: ['Coffee Co.', 'Roastery', 'Cafe', 'Brew Bar', 'Bean Bar', 'Espresso Lab'],
+      swaps: [['been', 'bean'], ['bean', 'bean'], ['much', 'mocha'], ['late', 'latte'], ['express', 'espresso'], ['grind', 'grind'], ['perk', 'perk'], ['beautiful', 'brew-tiful']] },
+    tech: { label: 'Tech',
+      adj: ['Byte-Size', 'Pixel-Perfect', 'Data-licious', 'Click-worthy', 'Cloud Nine', 'Smart'],
+      puns: ['Byte Me', 'Bit by Bit', 'Code Red', 'Pixel Perfect', 'Cache Me If You Can', 'Open Sesame', 'Data-licious', 'Net Worth', 'Hello World', 'Ctrl Alt Win', 'Byte Size', 'Cloud Nine', 'Wi-Fi Not', 'Sync or Swim', 'Click Bait', 'Log In & Out'],
+      tails: ['Labs', '.io', 'Logic', 'Bytes', 'Systems', 'Hub'],
+      nouns: ['Labs', 'Tech', 'Systems', 'Studio', 'Hub', 'Works', 'Digital'],
+      swaps: [['bit', 'byte'], ['bite', 'byte'], ['cash', 'cache'], ['core', 'code'], ['clock', 'click'], ['dat', 'data'], ['net', 'net']] },
+    fitness: { label: 'Fitness',
+      adj: ['Fit-tastic', 'Flex-ible', 'Pump-ed', 'Core', 'Gains', 'Rep-utable'],
+      puns: ['Sweat Equity', 'Rep-utation', 'Lift Off', 'Squat Happens', 'Muscle Memory', 'Weight for It', 'Plank You', 'Fit Happens', 'Gains Station', 'Dumbbell Club', 'Burn Notice', 'Core Values', 'Sweat Dreams', 'Pump It Up', 'Rest Day Rebels', 'Flex Appeal'],
+      tails: ['Fit', 'Gym', 'Fitness', '& Flex', 'Athletics'],
+      nouns: ['Gym', 'Fit Club', 'Fitness Lab', 'Training Co.', 'Studio', 'Strength Co.'],
+      swaps: [['wait', 'weight'], ['weight', 'weight'], ['rep', 'rep'], ['fit', 'fit'], ['flex', 'flex'], ['core', 'core'], ['lift', 'lift']] },
+    beauty: { label: 'Hair & beauty',
+      adj: ['Glow-ing', 'Hair-raising', 'Nail-ed', 'Blush-ing', 'Shear', 'Lash-ing'],
+      puns: ['Hair Today', 'Curl Up & Dye', 'Shear Genius', 'Mane Event', 'Glow Getter', 'Nailed It', 'Polish Off', 'Lash Out', 'Brow Beat', 'Makeup Your Mind', 'Blush Hour', 'Cut Above', 'Tress for Success', 'Dye Hard', 'Hair We Go', 'Wax Poetic'],
+      tails: ['& Glow', 'Beauty', 'Studio', 'Bar', 'Lounge'],
+      nouns: ['Salon', 'Beauty Bar', 'Glow Studio', 'Lash Lounge', 'Nail Bar', 'Hair Studio'],
+      swaps: [['share', 'shear'], ['here', 'hair'], ['hair', 'hair'], ['nail', 'nail'], ['glow', 'glow'], ['curl', 'curl'], ['dye', 'dye'], ['blush', 'blush']] },
+    plants: { label: 'Plants & garden',
+      adj: ['Plant-tastic', 'Fern-tastic', 'Leaf-y', 'Bud-ding', 'Grow-ing', 'Aloe-ha'],
+      puns: ['Leaf Me Alone', 'Aloe There', 'Succ It Up', 'Plant-tastic', 'Herb Your Enthusiasm', 'Thyme Flies', 'Root for You', 'Fern-tastic', 'Pot-ential', 'Grow Getter', 'Soil Mates', 'Bud-ding', 'Petal Pusher', 'Cact-us Be Friends', 'Turn Over a New Leaf', 'Lily Love'],
+      tails: ['& Bloom', 'Gardens', 'Greens', 'Roots', 'Blooms'],
+      nouns: ['Garden Co.', 'Plant Shop', 'Greenhouse', 'Nursery', 'Bloom Studio', 'Florals'],
+      swaps: [['leave', 'leaf'], ['hello', 'aloe'], ['hell', 'aloe'], ['time', 'thyme'], ['pot', 'pot'], ['grow', 'grow'], ['root', 'root'], ['soul', 'soil']] },
+    kids: { label: 'Kids',
+      adj: ['Kid-tastic', 'Tot-ally', 'Little', 'Tiny', 'Giggly', 'Wee'],
+      puns: ['Little Wonders', 'Tiny Tots', 'Giggle Box', 'Pint Size', 'Bundle of Joy', 'Wee Ones', 'Crayon Club', 'Play Date', 'Kid-tastic', 'Baby Steps', 'Hug Bugs', 'Small Fry', 'Bright Sparks', 'Peek-a-Boo', 'Fun-damentals', 'Tot-ally Fun'],
+      tails: ['Kids', 'Tots', 'Little Ones', 'Playhouse', 'Corner'],
+      nouns: ['Kids Co.', 'Playhouse', 'Little Shop', 'Toy Box', 'Kids Club', 'Nursery'],
+      swaps: [['tot', 'tot'], ['kid', 'kid'], ['fun', 'fun'], ['play', 'play'], ['small', 'small'], ['little', 'little']] },
+    hire: { label: 'Hiring & staffing',
+      adj: ['Hire-Calibre', 'Right-Fit', 'Top-Tier', 'Helping', 'Hire-able', 'Dream Team'],
+      puns: ['Hire Power', 'Job Well Done', 'Talent Hunt', 'Staff Picks', 'Help Wanted', 'Hire Education', 'Good Hands', 'Perfect Match', 'Helping Hands', 'Hire Calling', 'Team Spirit', 'Work It', 'Right Fit', 'Hired Gun', 'Head Hunters', 'Hire Ground'],
+      tails: ['Staffing', 'Talent', 'Careers', 'Recruit', 'Placements'],
+      nouns: ['Recruitment', 'Talent Co.', 'Staffing', 'Careers', 'Placements', 'People Co.'],
+      swaps: [['higher', 'hire'], ['hire', 'hire'], ['power', 'power'], ['help', 'help'], ['staff', 'staff'], ['work', 'work']] },
+    biz: { label: 'Consulting & business',
+      adj: ['Plan-tastic', 'Smart', 'Spark-ling', 'Pivot-al', 'Net Gain', 'Bottom-Line'],
+      puns: ['Smart Moves', 'Plan-tastic', 'Spark Notes', 'Bottom Line', 'Think Tank', 'Net Gain', 'Profit Margin', 'Growth Mindset', 'Sound Advice', 'Cash Flow', 'Pivot Point', 'Brand New Day', 'Mind the Gap', 'The Right Angle', 'Idea-ology', 'Biz-ness as Usual'],
+      tails: ['Advisors', 'Partners', 'Consulting', '& Co.', 'Solutions'],
+      nouns: ['Consulting', 'Advisors', 'Partners', 'Group', 'Solutions', 'Strategy Co.'],
+      swaps: [['plan', 'plan'], ['spark', 'spark'], ['smart', 'smart'], ['grow', 'grow'], ['profit', 'profit'], ['sound', 'sound']] }
+  };
+  var punTheme = 'cats';
+  var punSaved = [];
+  try { var rawPun = JSON.parse(localStorage.getItem('pb-puns') || '[]'); if (Array.isArray(rawPun)) punSaved = rawPun.filter(function (x) { return typeof x === 'string'; }).slice(0, 60); } catch (e) {}
+  function punSave() { try { localStorage.setItem('pb-puns', JSON.stringify(punSaved)); } catch (e) {} }
+  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+  function titleCase(s) { return s.replace(/\S+/g, function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }); }
+  function punSwap(word, rules) {
+    var low = word.toLowerCase(), order = rules.slice().sort(function () { return Math.random() - 0.5; });
+    for (var i = 0; i < order.length; i++) {
+      var from = order[i][0], to = order[i][1];
+      if (from === to) continue;
+      var at = low.indexOf(from);
+      if (at >= 0) {
+        var out = word.slice(0, at) + to + word.slice(at + from.length);
+        return titleCase(out);
+      }
+    }
+    return null;
+  }
+  function punMake(themeKey, wordRaw, count) {
+    var T = PUN[themeKey], word = titleCase(wordRaw.trim().replace(/\s+/g, ' ')).slice(0, 30), seen = {}, out = [], tries = 0;
+    function add(n) {
+      var key = n.toLowerCase();
+      if (!n || seen[key] || n.length > 46) return;
+      seen[key] = 1; out.push(n);
+    }
+    while (out.length < count && tries++ < 500) {
+      var r = Math.random();
+      if (word) {
+        var sw = punSwap(word, T.swaps);
+        if (r < 0.30) add(pick(T.adj) + ' ' + word);
+        else if (r < 0.50) add(word + ' ' + pick(T.tails));
+        else if (r < 0.72) add(sw ? sw : pick(T.adj) + ' ' + word);
+        else if (r < 0.86) add((sw || word) + ' ' + pick(T.nouns));
+        else add(pick(T.puns));
+      } else {
+        if (r < 0.55) add(pick(T.puns));
+        else add(pick(T.adj) + ' ' + pick(T.nouns));
+      }
+    }
+    return out;
+  }
+
+  var punResults = [];
+  function punSavedHas(n) { return punSaved.indexOf(n) >= 0; }
+  function punRow(name, ul, saved) {
+    var li = document.createElement('li'); li.className = 'pn-item';
+    var t = document.createElement('span'); t.className = 'pn-name'; t.textContent = name;
+    var star = document.createElement('button'); star.type = 'button'; star.className = 'icon-btn pn-btn'; star.textContent = punSavedHas(name) ? '\u2605' : '\u2606';
+    star.setAttribute('aria-label', (punSavedHas(name) ? 'Remove from saved: ' : 'Save: ') + name);
+    star.addEventListener('click', function () {
+      var at = punSaved.indexOf(name);
+      if (at >= 0) punSaved.splice(at, 1); else punSaved.unshift(name);
+      punSaved = punSaved.slice(0, 60); punSave(); punRender();
+    });
+    var cp = document.createElement('button'); cp.type = 'button'; cp.className = 'icon-btn pn-btn pn-copy'; cp.textContent = 'Copy';
+    cp.addEventListener('click', function () { copyText(name, cp); });
+    li.appendChild(t); li.appendChild(star); li.appendChild(cp); ul.appendChild(li);
+  }
+  function punRender() {
+    $$('#pn-themes .chip').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.pn === punTheme ? 'true' : 'false'); });
+    var ul = $('#pn-list'); ul.textContent = '';
+    punResults.forEach(function (n) { punRow(n, ul); });
+    var sv = $('#pn-saved'); sv.textContent = '';
+    punSaved.forEach(function (n) { punRow(n, sv); });
+    $('#pn-saved-wrap').hidden = !punSaved.length;
+  }
+  function punGo() { punResults = punMake(punTheme, $('#pn-word').value, 8); punRender(); }
+  (function () {
+    var box = $('#pn-themes');
+    Object.keys(PUN).forEach(function (k) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip sm'; b.dataset.pn = k; b.textContent = PUN[k].label;
+      b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', function () { punTheme = k; punGo(); });
+      box.appendChild(b);
+    });
+    $('#pn-go').addEventListener('click', punGo);
+    $('#pn-word').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); punGo(); } });
+    $('#pn-clear').addEventListener('click', function () { punSaved = []; punSave(); punRender(); });
+    punGo();
+  })();
+
   /* ---------- Checklist ---------- */
   var ckItems = [];
   try { var rawCk = JSON.parse(localStorage.getItem('pb-list') || '[]'); if (Array.isArray(rawCk)) ckItems = rawCk.filter(function (x) { return x && typeof x.t === 'string'; }).map(function (x) { return { t: x.t, d: !!x.d }; }); } catch (e) {}
