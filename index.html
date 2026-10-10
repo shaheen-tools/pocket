@@ -330,6 +330,10 @@ textarea.input.short{min-height:84px}
 .sg-prev img{max-width:100%;max-height:120px}
 .sg-row{display:flex;flex-wrap:wrap;gap:8px}
 #sg-colors .chip{min-width:0}
+.tz-x{flex:none;width:36px;min-height:36px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;cursor:pointer;font-size:1.1rem;line-height:1}
+.tz-x:hover{background:var(--line);color:var(--ink)}
+.res.tzrow{align-items:center}
+.res.tzrow .k{flex:1}
 /* sizes */
 #sz-cats .chip{min-width:0}
 /* checklist */
@@ -695,7 +699,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   <!-- Time -->
   <section class="panel" id="panel-time" role="tabpanel" aria-labelledby="tab-time" hidden>
     <h2>Time zones</h2>
-    <p class="lede">Pick a time and see what it is in the UAE, Manila, Jakarta, India and New Zealand. Handy before you call.</p>
+    <p class="lede">Pick a time and see what it is in each of your cities, starting with wherever this device is. Add or remove cities as you like.</p>
     <div class="row">
       <div class="field"><label class="label" for="tz-date">Date</label><input class="input mono" id="tz-date" type="date"></div>
       <div class="field"><label class="label" for="tz-time">Time</label><input class="input mono" id="tz-time" type="time"></div>
@@ -706,7 +710,17 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     </div>
     <div class="btns"><button type="button" class="btn" id="tz-now">Use the time now</button></div>
     <div class="results" id="tz-list" aria-live="polite"></div>
-    <p class="hint">Working hours are 9:00 to 18:00 local time. New Zealand changes its clocks for daylight saving, and this follows it.</p>
+    <div class="field">
+      <label class="label" for="tz-add">Add a city</label>
+      <div class="ck-add">
+        <input class="input" id="tz-add" list="tz-names" placeholder="e.g. London, New York, Tokyo" autocomplete="off" autocapitalize="words">
+        <button type="button" class="btn primary" id="tz-addbtn">Add</button>
+      </div>
+      <datalist id="tz-names"></datalist>
+      <p class="hint" id="tz-msg" role="status"></p>
+    </div>
+    <div class="btns"><button type="button" class="btn" id="tz-reset">Reset to the default cities</button></div>
+    <p class="hint">Working hours are 9:00 to 18:00 local time. Daylight saving changes are followed automatically. Your city list is saved on this device.</p>
   </section>
 
   <!-- Calculator -->
@@ -1316,7 +1330,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     box.textContent = '';
     CUR.forEach(function (c) {
       if (c[0] === from || !(c[3] || c[0] === to)) return;
-      var row = document.createElement('div'); row.className = 'res';
+      var row = document.createElement('div'); row.className = 'res tzrow';
       var k = document.createElement('span'); k.className = 'k'; k.textContent = c[0] + ' · ' + c[1];
       var n = document.createElement('span'); n.className = 'num'; n.textContent = money(convertCur(amount, from, c[0]), c[0]);
       row.appendChild(k); row.appendChild(n); box.appendChild(row);
@@ -1490,7 +1504,35 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   });
 
   /* ---------- Time zones ---------- */
-  var CITIES = [['UAE', 'Asia/Dubai'], ['Manila', 'Asia/Manila'], ['Jakarta', 'Asia/Jakarta'], ['India', 'Asia/Kolkata'], ['New Zealand', 'Pacific/Auckland']];
+  var DEFAULT_CITIES = [['UAE', 'Asia/Dubai'], ['Manila', 'Asia/Manila'], ['Jakarta', 'Asia/Jakarta'], ['India', 'Asia/Kolkata'], ['New Zealand', 'Pacific/Auckland']];
+  var CITIES = DEFAULT_CITIES.slice();
+  var DEVICE_TZ = (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } })();
+  var TZ_POPULAR = [['UAE', 'Asia/Dubai'], ['Saudi Arabia', 'Asia/Riyadh'], ['Qatar', 'Asia/Qatar'], ['Kuwait', 'Asia/Kuwait'], ['Oman', 'Asia/Muscat'], ['Bahrain', 'Asia/Bahrain'], ['Pakistan', 'Asia/Karachi'], ['India', 'Asia/Kolkata'], ['Sri Lanka', 'Asia/Colombo'], ['Bangladesh', 'Asia/Dhaka'], ['Nepal', 'Asia/Kathmandu'], ['Bangkok', 'Asia/Bangkok'], ['Jakarta', 'Asia/Jakarta'], ['Manila', 'Asia/Manila'], ['Singapore', 'Asia/Singapore'], ['Kuala Lumpur', 'Asia/Kuala_Lumpur'], ['Hong Kong', 'Asia/Hong_Kong'], ['China', 'Asia/Shanghai'], ['Tokyo', 'Asia/Tokyo'], ['Seoul', 'Asia/Seoul'], ['Sydney', 'Australia/Sydney'], ['Perth', 'Australia/Perth'], ['New Zealand', 'Pacific/Auckland'], ['Cairo', 'Africa/Cairo'], ['Nairobi', 'Africa/Nairobi'], ['Addis Ababa', 'Africa/Addis_Ababa'], ['Lagos', 'Africa/Lagos'], ['Johannesburg', 'Africa/Johannesburg'], ['Istanbul', 'Europe/Istanbul'], ['Moscow', 'Europe/Moscow'], ['London', 'Europe/London'], ['Paris', 'Europe/Paris'], ['Berlin', 'Europe/Berlin'], ['Madrid', 'Europe/Madrid'], ['Rome', 'Europe/Rome'], ['Amsterdam', 'Europe/Amsterdam'], ['Zurich', 'Europe/Zurich'], ['Dublin', 'Europe/Dublin'], ['Lisbon', 'Europe/Lisbon'], ['Athens', 'Europe/Athens'], ['New York', 'America/New_York'], ['Chicago', 'America/Chicago'], ['Denver', 'America/Denver'], ['Los Angeles', 'America/Los_Angeles'], ['Vancouver', 'America/Vancouver'], ['Toronto', 'America/Toronto'], ['Mexico City', 'America/Mexico_City'], ['Sao Paulo', 'America/Sao_Paulo'], ['Buenos Aires', 'America/Argentina/Buenos_Aires'], ['Honolulu', 'Pacific/Honolulu']];
+  function tzLabel(tz) {
+    for (var i = 0; i < TZ_POPULAR.length; i++) if (TZ_POPULAR[i][1] === tz) return TZ_POPULAR[i][0];
+    return tz.split('/').pop().replace(/_/g, ' ');
+  }
+  function tzValid(tz) { try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch (e) { return false; } }
+  function loadCities() {
+    try {
+      var raw = JSON.parse(localStorage.getItem('pb-zones') || 'null');
+      if (Array.isArray(raw)) {
+        var ok = raw.filter(function (c) { return Array.isArray(c) && typeof c[0] === 'string' && typeof c[1] === 'string' && tzValid(c[1]); });
+        if (ok.length || raw.length === 0) return ok;
+      }
+    } catch (e) {}
+    return DEFAULT_CITIES.slice();
+  }
+  function saveCities() { try { localStorage.setItem('pb-zones', JSON.stringify(CITIES)); } catch (e) {} }
+  CITIES = loadCities();
+  /* the list shown: this device first (unless it is already in the list), then the saved cities */
+  function shownCities() {
+    var out = [], dev = DEVICE_TZ && tzValid(DEVICE_TZ) ? DEVICE_TZ : '';
+    var inList = CITIES.some(function (c) { return c[1] === dev; });
+    if (dev && !inList) out.push([tzLabel(dev), dev, 'device']);
+    CITIES.forEach(function (c, i) { out.push([c[0], c[1], c[1] === dev ? 'device-saved' : '', i]); });
+    return out;
+  }
   var dtfCache = {};
   function pad2(n) { return String(n).padStart(2, '0'); }
   function zoneParts(ms, tz) {
@@ -1523,7 +1565,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     var inst = zonedToUtc(+m[1], +m[2], +m[3], +t[1], +t[2], src);
     var sp = zoneParts(inst, src);
     var srcDay = Date.UTC(sp.year, sp.month - 1, sp.day);
-    CITIES.forEach(function (c) {
+    shownCities().forEach(function (c) {
       var p = zoneParts(inst, c[1]);
       var day = Date.UTC(p.year, p.month - 1, p.day);
       var diff = Math.round((day - srcDay) / DAY);
@@ -1539,13 +1581,20 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       var small = document.createElement('small');
       var dot = document.createElement('i'); dot.className = 'dot' + (work ? ' work' : edge ? ' edge' : '');
       small.appendChild(dot);
-      small.appendChild(document.createTextNode(label + (c[1] === src ? ' · time entered' : '')));
+      small.appendChild(document.createTextNode(label + (c[2] ? ' · this device' : '') + (c[1] === src ? ' · time entered' : '')));
       k.appendChild(strong); k.appendChild(small);
       var n = document.createElement('span'); n.className = 'num';
       n.appendChild(document.createTextNode(pad2(p.hour) + ':' + pad2(p.minute)));
       var sd = document.createElement('span'); sd.className = 'sub-d'; sd.textContent = dateText;
       n.appendChild(sd);
-      row.appendChild(k); row.appendChild(n); list.appendChild(row);
+      row.appendChild(k); row.appendChild(n);
+      if (c[2] !== 'device') {
+        var x = document.createElement('button'); x.type = 'button'; x.className = 'tz-x';
+        x.setAttribute('aria-label', 'Remove ' + c[0]); x.textContent = '×';
+        x.addEventListener('click', function () { CITIES.splice(c[3], 1); saveCities(); fillZoneSelect(); renderTime(); });
+        row.appendChild(x);
+      }
+      list.appendChild(row);
     });
   }
   function timeNow() {
@@ -1554,15 +1603,55 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     $('#tz-time').value = pad2(o.hour) + ':' + pad2(o.minute);
     renderTime();
   }
-  function initTime() {
-    var sel = $('#tz-zone');
-    CITIES.forEach(function (c) {
-      var o = document.createElement('option'); o.value = c[1]; o.textContent = c[0];
+  function fillZoneSelect() {
+    var sel = $('#tz-zone'), keep = sel.value;
+    sel.textContent = '';
+    shownCities().forEach(function (c) {
+      var o = document.createElement('option'); o.value = c[1]; o.textContent = c[0] + (c[2] ? ' (this device)' : '');
       sel.appendChild(o);
     });
-    sel.value = 'Asia/Dubai';
+    var vals = [].map.call(sel.options, function (o) { return o.value; });
+    sel.value = vals.indexOf(keep) >= 0 ? keep : (vals[0] || '');
+  }
+  function fillTzNames() {
+    var dl = $('#tz-names'), seen = {};
+    TZ_POPULAR.forEach(function (c) { seen[c[1]] = 1; var o = document.createElement('option'); o.value = c[0]; dl.appendChild(o); });
+    var all = [];
+    try { all = Intl.supportedValuesOf('timeZone'); } catch (e) {}
+    all.forEach(function (z) { if (!seen[z]) { var o = document.createElement('option'); o.value = tzLabel(z); dl.appendChild(o); } });
+  }
+  function findZone(q) {
+    q = q.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!q) return null;
+    var i, n;
+    var seg = function (z) { return z.split('/').pop().replace(/_/g, ' ').toLowerCase(); };
+    if (q === 'abu dhabi' || q === 'sharjah' || q === 'al ain') q = 'dubai';
+    for (i = 0; i < TZ_POPULAR.length; i++) if (TZ_POPULAR[i][0].toLowerCase() === q || TZ_POPULAR[i][1].toLowerCase() === q || seg(TZ_POPULAR[i][1]) === q) return TZ_POPULAR[i];
+    var all = [];
+    try { all = Intl.supportedValuesOf('timeZone'); } catch (e) {}
+    for (i = 0; i < all.length; i++) { n = tzLabel(all[i]).toLowerCase(); if (n === q || all[i].toLowerCase() === q) return [tzLabel(all[i]), all[i]]; }
+    for (i = 0; i < TZ_POPULAR.length; i++) if (TZ_POPULAR[i][0].toLowerCase().indexOf(q) === 0) return TZ_POPULAR[i];
+    for (i = 0; i < all.length; i++) if (tzLabel(all[i]).toLowerCase().indexOf(q) === 0) return [tzLabel(all[i]), all[i]];
+    return null;
+  }
+  function addCity() {
+    var inp = $('#tz-add'), msg = $('#tz-msg'), z = findZone(inp.value);
+    if (!inp.value.trim()) { msg.textContent = 'Type a city or country first.'; return; }
+    if (!z) { msg.textContent = 'Could not find that one. Try the big city nearby, like Dubai or London.'; return; }
+    if (CITIES.some(function (c) { return c[1] === z[1]; }) || (z[1] === DEVICE_TZ)) { msg.textContent = z[0] + ' is already in the list.'; return; }
+    CITIES.push([z[0], z[1]]); saveCities(); inp.value = ''; msg.textContent = 'Added ' + z[0] + '.';
+    fillZoneSelect(); renderTime();
+  }
+  function initTime() {
+    fillTzNames(); fillZoneSelect();
+    var dev = DEVICE_TZ && tzValid(DEVICE_TZ) ? DEVICE_TZ : 'Asia/Dubai';
+    $('#tz-zone').value = dev;
+    if ($('#tz-zone').value !== dev) $('#tz-zone').selectedIndex = 0;
     timeNow();
   }
+  $('#tz-addbtn').addEventListener('click', addCity);
+  $('#tz-add').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addCity(); } });
+  $('#tz-reset').addEventListener('click', function () { CITIES = DEFAULT_CITIES.slice(); saveCities(); $('#tz-msg').textContent = 'Back to the default cities.'; fillZoneSelect(); renderTime(); });
   ['#tz-date', '#tz-time'].forEach(function (id) { $(id).addEventListener('input', renderTime); $(id).addEventListener('change', renderTime); });
   $('#tz-zone').addEventListener('change', renderTime);
   $('#tz-now').addEventListener('click', timeNow);
