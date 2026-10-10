@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#15222E"/>
+  <g transform="translate(256 256) scale(1.08) translate(-256 -256)">
+  <g stroke="#0B131A" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <!-- tools fan out from each end of the handle -->
+    <g transform="translate(150 256) rotate(-152)"><path d="M0,-13 L95,-13 Q138,-3 132,10 L0,13 Z" fill="#E3EAEF"/></g>
+    <g transform="translate(150 256) rotate(150)"><path d="M0,-10 L108,-10 L124,-5 L124,5 L108,10 L0,10 Z" fill="#C9D4DB"/></g>
+    <g transform="translate(362 256) rotate(-28)"><path d="M0,-13 L122,-13 L122,13 L0,13 Z" fill="#E3EAEF"/><path d="M118,-13 l-9,-13 l-9,13 l-9,-13 l-9,13 l-9,-13 l-9,13" fill="none" stroke-width="5"/></g>
+    <g transform="translate(362 256) rotate(30)"><path d="M0,0 L40,0 l8,-14 l16,28 l16,-28 l16,28 l12,-20" fill="none" stroke="#C9D4DB" stroke-width="16"/><path d="M0,0 L40,0 l8,-14 l16,28 l16,-28 l16,28 l12,-20" fill="none" stroke-width="5"/></g>
+    <!-- handle -->
+    <rect x="96" y="214" width="320" height="84" rx="42" fill="#FFC72C"/>
+  </g>
+  <circle cx="140" cy="256" r="9" fill="#0B131A"/>
+  <circle cx="372" cy="256" r="9" fill="#0B131A"/>
+  <path d="M236 256h40M256 236v40" stroke="#15222E" stroke-width="12" stroke-linecap="round"/>
+  </g>
+</svg>

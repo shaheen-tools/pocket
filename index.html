@@ -1,0 +1,1997 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#15222E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pocket Tool">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Pocket Tool</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"">
+<style>
+/* Layout: a yellow tape-measure strip under the title, a row of drawer-label tabs, one working panel at a time. */
+:root{
+  --bg:#E8EDF1;
+  --surface:#F6F8FA;
+  --field:#FFFFFF;
+  --ink:#15222E;
+  --muted:#566676;
+  --line:#C5D0D9;
+  --accent:#F2B600;
+  --on-accent:#15222E;
+  --accent-ink:#7A4F00;
+  --focus:#2457C5;
+  --good:#0B7A4B;
+  --warn:#B25E00;
+  --bad:#B3261E;
+  --font-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F171E;
+    --surface:#17222B;
+    --field:#0F171E;
+    --ink:#E9EFF3;
+    --muted:#9AABB9;
+    --line:#2B3B48;
+    --accent:#FFC72C;
+    --on-accent:#15222E;
+    --accent-ink:#FFC72C;
+    --focus:#8DB8FF;
+    --good:#4FD08F;
+    --warn:#FFA94D;
+    --bad:#FF8A80;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F171E;
+  --surface:#17222B;
+  --field:#0F171E;
+  --ink:#E9EFF3;
+  --muted:#9AABB9;
+  --line:#2B3B48;
+  --accent:#FFC72C;
+  --on-accent:#15222E;
+  --accent-ink:#FFC72C;
+  --focus:#8DB8FF;
+  --good:#4FD08F;
+  --warn:#FFA94D;
+  --bad:#FF8A80;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.5;
+  padding-block:28px 64px;
+  padding-inline:16px;
+}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.wrap{max-width:620px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+.head{display:flex;flex-direction:column;gap:4px}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(2rem,8vw,2.9rem);
+  letter-spacing:-0.025em;
+  line-height:1.05;
+  margin:0;
+  text-wrap:balance;
+}
+.sub{margin:0;color:var(--muted)}
+
+[hidden]{display:none !important}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{
+  border:1px solid var(--line);
+  background:transparent;
+  border-radius:8px;
+  padding:5px 11px;
+  min-height:34px;
+  font-size:.85rem;
+  cursor:pointer;
+  font-weight:600;
+}
+.tab:hover{border-color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.panel h2{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:1.5rem;
+  letter-spacing:-0.015em;
+  margin:0;
+}
+.lede{margin:-8px 0 0;color:var(--muted);max-width:60ch}
+
+.field{display:grid;gap:6px;min-width:0}
+.label{
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--muted);
+  font-weight:600;
+}
+.input{
+  width:100%;
+  min-height:46px;
+  padding:9px 12px;
+  background:var(--field);
+  border:1px solid var(--line);
+  border-radius:8px;
+}
+.input.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+textarea.input{min-height:120px;resize:vertical;line-height:1.45}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+
+.btn{
+  min-height:46px;
+  padding:9px 18px;
+  border-radius:8px;
+  border:1px solid var(--ink);
+  background:transparent;
+  cursor:pointer;
+  font-weight:600;
+}
+.btn:hover{background:var(--line)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(.95)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+
+.seg{display:flex;gap:3px;padding:3px;background:var(--field);border:1px solid var(--line);border-radius:10px}
+.seg button{
+  flex:1;
+  min-height:40px;
+  border:0;
+  border-radius:7px;
+  background:transparent;
+  cursor:pointer;
+  font-weight:600;
+  padding-inline:10px;
+}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  min-height:44px;
+  min-width:56px;
+  padding:6px 14px;
+  border:1px solid var(--line);
+  background:var(--field);
+  border-radius:99px;
+  cursor:pointer;
+  font-family:var(--font-mono);
+  font-weight:500;
+}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{
+  width:46px;height:46px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--field);
+  font-size:1.25rem;
+  cursor:pointer;
+}
+.stepper output{font-family:var(--font-mono);font-size:1.35rem;min-width:2.5ch;text-align:center}
+
+.check{display:flex;align-items:center;gap:10px;min-height:32px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--ink)}
+
+.results{display:grid;border-top:1px solid var(--line)}
+.res{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid var(--line);
+}
+.res .k{color:var(--muted);min-width:0}
+.res .num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;overflow-wrap:anywhere}
+.res.total .k{color:var(--ink);font-weight:600}
+.res.total .num{font-size:1.9rem;font-weight:500}
+.unit{font-size:.8rem;color:var(--muted);margin-right:6px;font-family:var(--font-body)}
+.hint{margin:0;font-size:.85rem;color:var(--muted)}
+
+/* units, dates, percent */
+select.input{appearance:auto}
+.sec-h{font-family:var(--font-display);font-weight:700;font-size:1.1rem;letter-spacing:-0.01em;margin:0}
+.split-sec{display:flex;flex-direction:column;gap:14px}
+.split-sec + .split-sec{border-top:1px solid var(--line);padding-top:18px}
+.res.total .num.sm{font-size:1.2rem}
+.calc-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.calc-line .input{width:112px;flex:0 0 auto}
+
+/* currency, qr */
+.fields{display:grid;gap:14px}
+textarea.input.short{min-height:84px}
+.qr-frame{
+  width:min(100%,300px);
+  aspect-ratio:1;
+  margin-inline:auto;
+  background:#FFFFFF;
+  color:#15222E;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+  display:grid;
+  place-items:center;
+}
+.qr-frame img{width:100%;height:100%;display:block;object-fit:contain;image-rendering:pixelated}
+.qr-msg{margin:0;text-align:center;font-size:.95rem;padding:8px}
+.qr-data{margin:0;text-align:center;font-family:var(--font-mono);font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+
+/* time */
+.chip.sm{min-height:32px;min-width:0;padding:3px 11px;font-size:.8rem}
+.res .k.city{display:flex;flex-direction:column;gap:2px}
+.res .k.city strong{color:var(--ink);font-weight:600}
+.res .k.city small{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line);display:inline-block;flex:0 0 auto}
+.dot.work{background:var(--good)}
+.dot.edge{background:var(--warn)}
+.res .num .sub-d{display:block;font-family:var(--font-body);font-size:.8rem;color:var(--muted)}
+
+.chip.day{min-width:0;min-height:40px;padding:5px 12px}
+
+/* calculator */
+.calc-screen{
+  background:var(--field);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:12px 14px;
+  min-height:112px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  align-items:flex-end;
+  gap:4px;
+}
+.calc-expr{width:100%;text-align:right;font-family:var(--font-mono);font-size:2rem;line-height:1.2;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.calc-expr.long{font-size:1.4rem}
+.calc-result{min-height:1.6rem;font-family:var(--font-mono);font-size:1.15rem;color:var(--muted);text-align:right;overflow-wrap:anywhere}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.key{
+  min-height:58px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:var(--field);
+  font-family:var(--font-mono);
+  font-size:1.35rem;
+  cursor:pointer;
+}
+.key:active{transform:scale(.97)}
+.key.fn{font-weight:600}
+.key.op{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.key.eq{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
+.calc-hist{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.calc-hist button{
+  width:100%;
+  text-align:right;
+  min-height:36px;
+  padding:4px 10px;
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:8px;
+  color:var(--muted);
+  font-family:var(--font-mono);
+  font-size:.9rem;
+  cursor:pointer;
+  overflow-wrap:anywhere;
+}
+.calc-hist button:hover{border-color:var(--line)}
+
+/* scan */
+.cmp-scan{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.cmp-scan .btn{min-height:40px;padding:6px 14px}
+.cmp-scan .hint{margin:0;flex:1 1 180px}
+/* currency picker */
+.cur-pick{position:relative}
+.pick-btn{text-align:left;cursor:pointer;color:var(--ink);font:inherit;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pick-btn::after{content:"\25BE";color:var(--muted)}
+.pick-pop{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;background:var(--surface);border:1px solid var(--ink);border-radius:10px;padding:8px;display:grid;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.pick-list{list-style:none;margin:0;padding:0;max-height:260px;overflow-y:auto;display:grid;gap:2px;-webkit-overflow-scrolling:touch}
+.pick-list li{padding:9px 10px;border-radius:8px;cursor:pointer;font-size:.95rem}
+.pick-list li.on,.pick-list li:hover{background:var(--line)}
+.pick-list li.sel{font-weight:600}
+.pick-list li.pick-h{cursor:default;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;padding:8px 10px 2px}
+.pick-list li.pick-h:hover{background:transparent}
+.pick-list li.none{cursor:default;color:var(--muted)}
+/* checklist */
+.ck-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.ck-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ck-item{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px;align-items:stretch}
+.ck-text{display:flex;align-items:center;gap:12px;min-height:46px;padding:8px 12px;border:1px solid var(--line);background:var(--field);border-radius:8px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);overflow-wrap:anywhere}
+.ck-box{flex:none;width:22px;height:22px;border:2px solid var(--muted);border-radius:6px;display:inline-grid;place-items:center;font-size:.9rem;line-height:1}
+.ck-item.done .ck-text{color:var(--muted);text-decoration:line-through}
+.ck-item.done .ck-box{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+/* compare */
+.cmp-items{display:grid;gap:18px}
+.cmp-item{display:grid;gap:10px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.cmp-head{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px}
+.cmp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cmp-line{font-family:var(--font-mono);font-size:.85rem;color:var(--muted);overflow-wrap:anywhere}
+.icon-btn{min-height:46px;width:44px;border:1px solid var(--line);background:var(--field);border-radius:8px;cursor:pointer;font-size:1.25rem}
+.icon-btn:hover{border-color:var(--ink)}
+.icon-btn:disabled{opacity:.4;cursor:not-allowed}
+.res .num.good{font-family:var(--font-body);font-weight:600;font-size:1rem;color:var(--good)}
+
+/* password */
+.pw-out{display:flex;gap:8px}
+.pw-out .input{flex:1;font-size:1.05rem;letter-spacing:.02em}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2px 16px}
+input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
+.len-head{display:flex;justify-content:space-between;align-items:baseline}
+.len-head output{font-family:var(--font-mono);font-size:1.1rem}
+.meter{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--good);transition:width .2s ease,background-color .2s ease}
+.meter-note{display:flex;justify-content:space-between;gap:12px;font-size:.9rem}
+.meter-note span:last-child{font-family:var(--font-mono)}
+
+@media (prefers-reduced-motion: reduce){
+  .meter i{transition:none}
+}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <header class="head">
+    <h1>Pocket Tool</h1>
+  </header>
+  <div class="tabs" role="tablist" aria-label="Tools">
+    <button class="tab" role="tab" id="tab-split" data-tab="split" aria-selected="true" aria-controls="panel-split">Split</button>
+    <button class="tab" role="tab" id="tab-units" data-tab="units" aria-selected="false" aria-controls="panel-units">Units</button>
+    <button class="tab" role="tab" id="tab-dates" data-tab="dates" aria-selected="false" aria-controls="panel-dates">Dates</button>
+    <button class="tab" role="tab" id="tab-percent" data-tab="percent" aria-selected="false" aria-controls="panel-percent">Percent</button>
+    <button class="tab" role="tab" id="tab-qr" data-tab="qr" aria-selected="false" aria-controls="panel-qr">QR</button>
+    <button class="tab" role="tab" id="tab-time" data-tab="time" aria-selected="false" aria-controls="panel-time">Time</button>
+    <button class="tab" role="tab" id="tab-password" data-tab="password" aria-selected="false" aria-controls="panel-password">Password</button>
+    <button class="tab" role="tab" id="tab-compare" data-tab="compare" aria-selected="false" aria-controls="panel-compare">Compare</button>
+    <button class="tab" role="tab" id="tab-vat" data-tab="vat" aria-selected="false" aria-controls="panel-vat">VAT</button>
+    <button class="tab" role="tab" id="tab-calc" data-tab="calc" aria-selected="false" aria-controls="panel-calc">Calculator</button>
+    <button class="tab" role="tab" id="tab-currency" data-tab="currency" aria-selected="false" aria-controls="panel-currency">Currency</button>
+    <button class="tab" role="tab" id="tab-list" data-tab="list" aria-selected="false" aria-controls="panel-list">Checklist</button>
+  </div>
+
+  <!-- VAT -->
+  <section class="panel" id="panel-vat" role="tabpanel" aria-labelledby="tab-vat" hidden>
+    <h2>VAT calculator</h2>
+    <p class="lede">Add VAT to a price, or pull it back out of a total. The UAE standard rate is 5%.</p>
+    <div class="seg" role="group" aria-label="Direction">
+      <button type="button" id="vat-add" aria-pressed="true">Add VAT</button>
+      <button type="button" id="vat-remove" aria-pressed="false">Remove VAT</button>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label class="label" for="vat-amount" id="vat-amount-label">Price before VAT (AED)</label>
+        <input class="input mono" id="vat-amount" type="text" inputmode="decimal" value="1250" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="label" for="vat-rate">VAT rate (%)</label>
+        <input class="input mono" id="vat-rate" type="text" inputmode="decimal" value="5" autocomplete="off">
+      </div>
+    </div>
+    <div class="results" aria-live="polite">
+      <div class="res"><span class="k">Price before VAT</span><span class="num"><span class="unit">AED</span><span id="vat-net">0.00</span></span></div>
+      <div class="res"><span class="k" id="vat-vat-label">VAT (5%)</span><span class="num"><span class="unit">AED</span><span id="vat-vat">0.00</span></span></div>
+      <div class="res total"><span class="k">Total with VAT</span><span class="num"><span class="unit">AED</span><span id="vat-gross">0.00</span></span></div>
+    </div>
+    <div class="btns"><button type="button" class="btn" id="vat-copy">Copy summary</button></div>
+  </section>
+
+  <!-- Split -->
+  <section class="panel" id="panel-split" role="tabpanel" aria-labelledby="tab-split">
+    <h2>Split the bill</h2>
+    <p class="lede">Add a tip, divide by the table, and round up if nobody wants to deal with fils.</p>
+    <div class="field">
+      <label class="label" for="split-bill">Bill total (AED)</label>
+      <input class="input mono" id="split-bill" type="text" inputmode="decimal" value="480" autocomplete="off">
+    </div>
+    <div class="field">
+      <span class="label" id="tip-label">Tip</span>
+      <div class="chips" role="group" aria-labelledby="tip-label" id="tip-chips">
+        <button type="button" class="chip" data-tip="0" aria-pressed="false">0%</button>
+        <button type="button" class="chip" data-tip="5" aria-pressed="false">5%</button>
+        <button type="button" class="chip" data-tip="10" aria-pressed="true">10%</button>
+        <button type="button" class="chip" data-tip="15" aria-pressed="false">15%</button>
+        <button type="button" class="chip" data-tip="20" aria-pressed="false">20%</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="label" id="people-label">People</span>
+      <div class="stepper" role="group" aria-labelledby="people-label">
+        <button type="button" id="people-minus" aria-label="One fewer person">&minus;</button>
+        <output id="split-people" aria-live="polite">4</output>
+        <button type="button" id="people-plus" aria-label="One more person">+</button>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="split-round"> Round each share up to a whole dirham</label>
+    <div class="results" aria-live="polite">
+      <div class="res total"><span class="k">Each person pays</span><span class="num"><span class="unit">AED</span><span id="split-per">0.00</span></span></div>
+      <div class="res"><span class="k" id="split-tip-label">Tip (10%)</span><span class="num"><span class="unit">AED</span><span id="split-tip">0.00</span></span></div>
+      <div class="res" id="split-extra-row" hidden><span class="k">Extra from rounding up</span><span class="num"><span class="unit">AED</span><span id="split-extra">0.00</span></span></div>
+      <div class="res"><span class="k">Table total</span><span class="num"><span class="unit">AED</span><span id="split-total">0.00</span></span></div>
+    </div>
+  </section>
+
+  <!-- Units -->
+  <section class="panel" id="panel-units" role="tabpanel" aria-labelledby="tab-units" hidden>
+    <h2>Unit converter</h2>
+    <p class="lede">Length, weight, volume and temperature, including cooking cups and the gold tola.</p>
+    <div class="chips" id="unit-cats" role="group" aria-label="Kind of unit">
+      <button type="button" class="chip" data-cat="length" aria-pressed="true">Length</button>
+      <button type="button" class="chip" data-cat="weight" aria-pressed="false">Weight</button>
+      <button type="button" class="chip" data-cat="volume" aria-pressed="false">Volume</button>
+      <button type="button" class="chip" data-cat="temp" aria-pressed="false">Temperature</button>
+    </div>
+    <div class="field">
+      <label class="label" for="unit-value">Amount</label>
+      <input class="input mono" id="unit-value" type="text" inputmode="decimal" value="6" autocomplete="off">
+    </div>
+    <div class="row">
+      <div class="field"><label class="label" for="unit-from">From</label><select class="input" id="unit-from"></select></div>
+      <div class="field"><label class="label" for="unit-to">To</label><select class="input" id="unit-to"></select></div>
+    </div>
+    <div class="btns"><button type="button" class="btn" id="unit-swap">Swap units</button></div>
+    <div class="results" aria-live="polite">
+      <div class="res total"><span class="k">Result</span><span class="num" id="unit-out">0</span></div>
+    </div>
+    <p class="hint" id="unit-line"></p>
+    <p class="hint" id="unit-note"></p>
+  </section>
+
+  <!-- Dates -->
+  <section class="panel" id="panel-dates" role="tabpanel" aria-labelledby="tab-dates" hidden>
+    <h2>Date calculator</h2>
+    <p class="lede">Count the days between two dates, or add days to one, counting only the weekdays you choose.</p>
+    <div class="split-sec">
+      <h3 class="sec-h">Days between</h3>
+      <div class="row">
+        <div class="field"><label class="label" for="dt-a">Start date</label><input class="input mono" id="dt-a" type="date"></div>
+        <div class="field"><label class="label" for="dt-b">End date</label><input class="input mono" id="dt-b" type="date"></div>
+      </div>
+      <div class="results" aria-live="polite">
+        <div class="res total"><span class="k">Days</span><span class="num" id="dt-days">0</span></div>
+        <div class="res"><span class="k">Weeks and days</span><span class="num" id="dt-weeks">0</span></div>
+        <div class="res"><span class="k">Years, months, days</span><span class="num" id="dt-ymd">0</span></div>
+      </div>
+      <p class="hint" id="dt-hint"></p>
+    </div>
+    <div class="split-sec">
+      <h3 class="sec-h">Add or subtract days</h3>
+      <div class="row">
+        <div class="field"><label class="label" for="dt-c">Start date</label><input class="input mono" id="dt-c" type="date"></div>
+        <div class="field"><label class="label" for="dt-n">Days (minus goes back)</label><input class="input mono" id="dt-n" type="number" step="1" value="90"></div>
+      </div>
+      <div class="field">
+        <span class="label" id="dt-pick-label">Which weekdays</span>
+        <div class="chips" id="dt-days-chips" role="group" aria-labelledby="dt-pick-label">
+          <button type="button" class="chip day" data-dow="1" aria-pressed="true">Mon</button>
+          <button type="button" class="chip day" data-dow="2" aria-pressed="true">Tue</button>
+          <button type="button" class="chip day" data-dow="3" aria-pressed="true">Wed</button>
+          <button type="button" class="chip day" data-dow="4" aria-pressed="true">Thu</button>
+          <button type="button" class="chip day" data-dow="5" aria-pressed="true">Fri</button>
+          <button type="button" class="chip day" data-dow="6" aria-pressed="true">Sat</button>
+          <button type="button" class="chip day" data-dow="0" aria-pressed="true">Sun</button>
+        </div>
+        <div class="chips" id="dt-presets" role="group" aria-label="Quick picks">
+          <button type="button" class="chip sm" data-preset="all">All days</button>
+          <button type="button" class="chip sm" data-preset="weekdays">Mon to Fri</button>
+          <button type="button" class="chip sm" data-preset="weekend">Sat and Sun</button>
+          <button type="button" class="chip sm" data-preset="none">Clear</button>
+        </div>
+      </div>
+      <div class="seg" role="group" aria-label="What to do with the selected weekdays">
+        <button type="button" id="dt-mode-count" aria-pressed="true">Count only these days</button>
+        <button type="button" id="dt-mode-skip" aria-pressed="false">Skip these days</button>
+      </div>
+      <div class="results" aria-live="polite">
+        <div class="res total"><span class="k">Lands on</span><span class="num sm" id="dt-result">-</span></div>
+        <div class="res"><span class="k">Calendar days apart</span><span class="num" id="dt-cal">-</span></div>
+        <div class="res"><span class="k">Days counted</span><span class="num" id="dt-counted">-</span></div>
+      </div>
+      <p class="hint" id="dt-add-hint"></p>
+    </div>
+  </section>
+
+  <!-- Percent -->
+  <section class="panel" id="panel-percent" role="tabpanel" aria-labelledby="tab-percent" hidden>
+    <h2>Percentages</h2>
+    <p class="lede">Four everyday percentage questions, answered as you type.</p>
+    <div class="split-sec">
+      <h3 class="sec-h">Percentage of a number</h3>
+      <div class="calc-line">
+        <span>What is</span>
+        <input class="input mono" id="pc-a" type="text" inputmode="decimal" value="15" aria-label="Percentage" autocomplete="off">
+        <span>% of</span>
+        <input class="input mono" id="pc-b" type="text" inputmode="decimal" value="2400" aria-label="Number" autocomplete="off">
+        <span>?</span>
+      </div>
+      <div class="results" aria-live="polite">
+        <div class="res total"><span class="k">Answer</span><span class="num" id="pc-r1">0</span></div>
+      </div>
+    </div>
+    <div class="split-sec">
+      <h3 class="sec-h">One number as a share of another</h3>
+      <div class="calc-line">
+        <input class="input mono" id="pc-c" type="text" inputmode="decimal" value="36" aria-label="Part" autocomplete="off">
+        <span>is what % of</span>
+        <input class="input mono" id="pc-d" type="text" inputmode="decimal" value="240" aria-label="Whole" autocomplete="off">
+        <span>?</span>
+      </div>
+      <div class="results" aria-live="polite">
+        <div class="res total"><span class="k">Answer</span><span class="num" id="pc-r2">0</span></div>
+      </div>
+    </div>
+    <div class="split-sec">
+      <h3 class="sec-h">Percentage change</h3>
+      <div class="calc-line">
+        <span>From</span>
+        <input class="input mono" id="pc-e" type="text" inputmode="decimal" value="1800" aria-label="Starting value" autocomplete="off">
+        <span>to</span>
+        <input class="input mono" id="pc-f" type="text" inputmode="decimal" value="2250" aria-label="Ending value" autocomplete="off">
+      </div>
+      <div class="results" aria-live="polite">
+        <div class="res total"><span class="k">Change</span><span class="num" id="pc-r3">0</span></div>
+        <div class="res"><span class="k">Difference</span><span class="num" id="pc-r3b">0</span></div>
+      </div>
+    </div>
+    <div class="split-sec">
+      <h3 class="sec-h">Margin and markup</h3>
+      <div class="row">
+        <div class="field"><label class="label" for="pc-cost">Cost per item (AED)</label><input class="input mono" id="pc-cost" type="text" inputmode="decimal" value="85" autocomplete="off"></div>
+        <div class="field"><label class="label" for="pc-price">Selling price (AED)</label><input class="input mono" id="pc-price" type="text" inputmode="decimal" value="120" autocomplete="off"></div>
+      </div>
+      <div class="results" aria-live="polite">
+        <div class="res total"><span class="k">Profit per item</span><span class="num"><span class="unit">AED</span><span id="pc-profit">0</span></span></div>
+        <div class="res"><span class="k">Margin (share of price)</span><span class="num" id="pc-margin">0</span></div>
+        <div class="res"><span class="k">Markup (share of cost)</span><span class="num" id="pc-markup">0</span></div>
+      </div>
+      <p class="hint">Margin is profit as a share of the selling price. Markup is profit as a share of cost.</p>
+    </div>
+  </section>
+
+  <!-- Currency -->
+  <section class="panel" id="panel-currency" role="tabpanel" aria-labelledby="tab-currency" hidden>
+    <h2>Currency converter</h2>
+    <p class="lede">AED, USD, PHP, IDR and INR are the main ones, with more in the lists. Rates update by themselves when you are online, and you can type your own to match your exchange house.</p>
+    <div class="field">
+      <label class="label" for="cur-amount">Amount</label>
+      <input class="input mono" id="cur-amount" type="text" inputmode="decimal" value="1000" autocomplete="off">
+    </div>
+    <div class="row">
+      <div class="field cur-pick" id="pick-from"><span class="label" id="lbl-from">From</span><select hidden id="cur-from"></select><button type="button" class="input pick-btn" id="pick-from-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lbl-from pick-from-btn"></button><div class="pick-pop" hidden><input type="text" class="input" placeholder="Type a name or code, like peso" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search currencies"><ul class="pick-list" role="listbox"></ul></div></div>
+      <div class="field cur-pick" id="pick-to"><span class="label" id="lbl-to">To</span><select hidden id="cur-to"></select><button type="button" class="input pick-btn" id="pick-to-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lbl-to pick-to-btn"></button><div class="pick-pop" hidden><input type="text" class="input" placeholder="Type a name or code, like peso" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search currencies"><ul class="pick-list" role="listbox"></ul></div></div>
+    </div>
+    <div class="btns"><button type="button" class="btn" id="cur-swap">Swap currencies</button></div>
+    <div class="results" aria-live="polite">
+      <div class="res total"><span class="k">Result</span><span class="num" id="cur-out">0</span></div>
+    </div>
+    <p class="hint" id="cur-line"></p>
+    <p class="hint" id="cur-status"></p>
+    <div class="split-sec">
+      <h3 class="sec-h">Same amount in the others</h3>
+      <div class="results" id="cur-all" aria-live="polite"></div>
+    </div>
+    <div class="split-sec">
+      <h3 class="sec-h">Your rates</h3>
+      <p class="hint" id="cur-note"></p>
+      <div class="field">
+        <label class="label" for="cur-peg">AED for 1 USD</label>
+        <input class="input mono" id="cur-peg" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+      <div class="chips" id="cur-peg-chips" role="group" aria-label="Common AED per USD rates">
+        <button type="button" class="chip sm" data-peg="3.6725" aria-pressed="true">3.6725 official</button>
+        <button type="button" class="chip sm" data-peg="3.675" aria-pressed="false">3.675 rounded</button>
+      </div>
+      <div class="row">
+        <div class="field"><label class="label" for="cur-rate-PHP">PHP for 1 AED</label><input class="input mono" id="cur-rate-PHP" type="text" inputmode="decimal" autocomplete="off"></div>
+        <div class="field"><label class="label" for="cur-rate-IDR">IDR for 1 AED</label><input class="input mono" id="cur-rate-IDR" type="text" inputmode="decimal" autocomplete="off"></div>
+        <div class="field"><label class="label" for="cur-rate-INR">INR for 1 AED</label><input class="input mono" id="cur-rate-INR" type="text" inputmode="decimal" autocomplete="off"></div>
+      </div>
+      <p class="hint">PHP, IDR and INR follow the latest rates until you type your own. Rates from <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">ExchangeRate-API</a>.</p>
+      <div class="btns"><button type="button" class="btn" id="cur-reset">Reset to latest rates</button></div>
+    </div>
+  </section>
+
+  <!-- QR -->
+  <section class="panel" id="panel-qr" role="tabpanel" aria-labelledby="tab-qr" hidden>
+    <h2>QR code maker</h2>
+    <p class="lede">Make a code for a link, a Wi-Fi login, a WhatsApp chat or a phone number. It is drawn in your browser and nothing is uploaded.</p>
+    <div class="chips" id="qr-types" role="group" aria-label="What the code holds">
+      <button type="button" class="chip" data-qr="text" aria-pressed="true">Link or text</button>
+      <button type="button" class="chip" data-qr="wifi" aria-pressed="false">Wi-Fi</button>
+      <button type="button" class="chip" data-qr="whatsapp" aria-pressed="false">WhatsApp</button>
+      <button type="button" class="chip" data-qr="phone" aria-pressed="false">Phone</button>
+    </div>
+    <div class="fields" id="qr-f-text">
+      <div class="field"><label class="label" for="qr-text">Link or text</label><textarea class="input short" id="qr-text" spellcheck="false">https://www.example.com</textarea></div>
+    </div>
+    <div class="fields" id="qr-f-wifi" hidden>
+      <div class="field"><label class="label" for="qr-ssid">Network name</label><input class="input" id="qr-ssid" type="text" autocomplete="off" placeholder="Office Guest"></div>
+      <div class="field"><label class="label" for="qr-pass">Password</label><input class="input" id="qr-pass" type="text" autocomplete="off" placeholder="Leave empty for an open network"></div>
+      <div class="field"><label class="label" for="qr-sec">Security</label>
+        <select class="input" id="qr-sec"><option value="WPA">WPA or WPA2</option><option value="WEP">WEP</option><option value="nopass">None</option></select>
+      </div>
+    </div>
+    <div class="fields" id="qr-f-whatsapp" hidden>
+      <div class="field"><label class="label" for="qr-wa-num">Number with country code</label><input class="input mono" id="qr-wa-num" type="text" inputmode="tel" autocomplete="off" placeholder="971 5X XXX XXXX"></div>
+      <div class="field"><label class="label" for="qr-wa-msg">First message (optional)</label><input class="input" id="qr-wa-msg" type="text" autocomplete="off" placeholder="Hello, I would like to book"></div>
+    </div>
+    <div class="fields" id="qr-f-phone" hidden>
+      <div class="field"><label class="label" for="qr-phone">Phone number</label><input class="input mono" id="qr-phone" type="text" inputmode="tel" autocomplete="off" placeholder="+971 5X XXX XXXX"></div>
+    </div>
+    <div class="qr-frame">
+      <img id="qr-img" alt="QR code" hidden>
+      <p class="qr-msg" id="qr-msg">Make a code above.</p>
+    </div>
+    <p class="qr-data" id="qr-data"></p>
+    <div class="btns" style="justify-content:center">
+      <button type="button" class="btn primary" id="qr-copy" disabled>Copy image</button>
+    </div>
+    <p class="hint" style="text-align:center">If copying does not work, press and hold the code (or right-click it) to save the image.</p>
+    <div class="field">
+      <label class="label" for="qr-ec">Error correction</label>
+      <select class="input" id="qr-ec">
+        <option value="L">Low, smallest code</option>
+        <option value="M" selected>Medium</option>
+        <option value="Q">Quartile</option>
+        <option value="H">High, survives scuffs</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- Time -->
+  <section class="panel" id="panel-time" role="tabpanel" aria-labelledby="tab-time" hidden>
+    <h2>Time zones</h2>
+    <p class="lede">Pick a time and see what it is in the UAE, Manila, Jakarta, India and New Zealand. Handy before you call.</p>
+    <div class="row">
+      <div class="field"><label class="label" for="tz-date">Date</label><input class="input mono" id="tz-date" type="date"></div>
+      <div class="field"><label class="label" for="tz-time">Time</label><input class="input mono" id="tz-time" type="time"></div>
+    </div>
+    <div class="field">
+      <label class="label" for="tz-zone">The time above is in</label>
+      <select class="input" id="tz-zone"></select>
+    </div>
+    <div class="btns"><button type="button" class="btn" id="tz-now">Use the time now</button></div>
+    <div class="results" id="tz-list" aria-live="polite"></div>
+    <p class="hint">Working hours are 9:00 to 18:00 local time. New Zealand changes its clocks for daylight saving, and this follows it.</p>
+  </section>
+
+  <!-- Calculator -->
+  <section class="panel" id="panel-calc" role="tabpanel" aria-labelledby="tab-calc" hidden>
+    <h2>Calculator</h2>
+    <div class="calc-screen" aria-live="polite">
+      <div class="calc-expr" id="calc-expr">0</div>
+      <div class="calc-result" id="calc-result"></div>
+    </div>
+    <div class="keys" id="calc-keys" role="group" aria-label="Calculator keys">
+      <button type="button" class="key fn" data-k="C" aria-label="Clear">C</button>
+      <button type="button" class="key fn" data-k="()" aria-label="Brackets">( )</button>
+      <button type="button" class="key fn" data-k="%" aria-label="Percent">%</button>
+      <button type="button" class="key op" data-k="&divide;" aria-label="Divide">&divide;</button>
+      <button type="button" class="key" data-k="7">7</button>
+      <button type="button" class="key" data-k="8">8</button>
+      <button type="button" class="key" data-k="9">9</button>
+      <button type="button" class="key op" data-k="&times;" aria-label="Multiply">&times;</button>
+      <button type="button" class="key" data-k="4">4</button>
+      <button type="button" class="key" data-k="5">5</button>
+      <button type="button" class="key" data-k="6">6</button>
+      <button type="button" class="key op" data-k="&minus;" aria-label="Minus">&minus;</button>
+      <button type="button" class="key" data-k="1">1</button>
+      <button type="button" class="key" data-k="2">2</button>
+      <button type="button" class="key" data-k="3">3</button>
+      <button type="button" class="key op" data-k="+" aria-label="Plus">+</button>
+      <button type="button" class="key" data-k="0">0</button>
+      <button type="button" class="key" data-k="." aria-label="Decimal point">.</button>
+      <button type="button" class="key fn" data-k="BS" aria-label="Backspace, delete last"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/></svg></button>
+      <button type="button" class="key eq" data-k="=" aria-label="Equals">=</button>
+    </div>
+    <p class="hint">Tap the backspace key to delete the last character. Hold it to keep deleting. C clears everything. Percent works like a phone: 200 + 10% is 220, and 200 &times; 10% is 20.</p>
+    <div class="field" id="calc-hist-wrap" hidden>
+      <span class="label">Recent</span>
+      <ul class="calc-hist" id="calc-hist"></ul>
+    </div>
+  </section>
+
+  <!-- Compare -->
+  <section class="panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
+    <h2>Price comparison</h2>
+    <p class="lede">Find out which pack is cheaper per kilo, litre or piece. Enter the price and size of each one. The three items below are examples.</p>
+    <p class="hint"><b>Size of one pack</b> is what is printed on a single pack, like 500 g or 1 L. <b>Number of packs</b> is how many packs you get for that price: 1 for a single pack, 3 for a 3-pack deal. Example: AED 14.90 for 3 packs of 200 g is 600 g in total.</p>
+    <div class="chips" id="cmp-kinds" role="group" aria-label="What you are comparing">
+      <button type="button" class="chip" data-cmp="weight" aria-pressed="true">Weight</button>
+      <button type="button" class="chip" data-cmp="volume" aria-pressed="false">Volume</button>
+      <button type="button" class="chip" data-cmp="count" aria-pressed="false">Pieces</button>
+    </div>
+    <div class="cmp-items" id="cmp-items"></div>
+    <div class="btns"><button type="button" class="btn" id="cmp-add">Add an item</button></div>
+    <div class="results" id="cmp-results" aria-live="polite"></div>
+    <p class="hint" id="cmp-note"></p>
+  </section>
+
+  <!-- Checklist -->
+  <section class="panel" id="panel-list" role="tabpanel" aria-labelledby="tab-list" hidden>
+    <h2>Checklist</h2>
+    <p class="lede">A simple to-do or shopping list. Tap an item to tick it off. It is saved on this device and in this browser only.</p>
+    <div class="ck-add">
+      <input type="text" class="input" id="ck-new" placeholder="Add an item" aria-label="New item" autocomplete="off">
+      <button type="button" class="btn primary" id="ck-add">Add</button>
+    </div>
+    <ul class="ck-list" id="ck-list"></ul>
+    <p class="hint" id="ck-count"></p>
+    <div class="btns">
+      <button type="button" class="btn" id="ck-clear-done">Clear ticked</button>
+      <button type="button" class="btn" id="ck-clear-all">Clear all</button>
+    </div>
+  </section>
+
+  <!-- Password -->
+  <section class="panel" id="panel-password" role="tabpanel" aria-labelledby="tab-password" hidden>
+    <h2>Password generator</h2>
+    <p class="lede">Made in your browser with its secure random source. Nothing is sent or saved.</p>
+    <div class="pw-out">
+      <input class="input mono" id="pw-out" type="text" readonly aria-label="Generated password" spellcheck="false">
+      <button type="button" class="btn primary" id="pw-copy">Copy</button>
+      <button type="button" class="btn" id="pw-new" aria-label="Generate a new password">New</button>
+    </div>
+    <div class="field">
+      <div class="len-head"><label class="label" for="pw-len">Length</label><output id="pw-len-out" for="pw-len">16</output></div>
+      <input type="range" id="pw-len" min="8" max="40" value="16">
+    </div>
+    <div class="opts">
+      <label class="check"><input type="checkbox" id="pw-lower" checked> Lowercase</label>
+      <label class="check"><input type="checkbox" id="pw-upper" checked> Uppercase</label>
+      <label class="check"><input type="checkbox" id="pw-digits" checked> Numbers</label>
+      <label class="check"><input type="checkbox" id="pw-symbols" checked> Symbols</label>
+      <label class="check"><input type="checkbox" id="pw-avoid"> Skip look-alikes (I l 1 O 0 o)</label>
+    </div>
+    <div class="field">
+      <div class="meter" aria-hidden="true"><i id="pw-bar"></i></div>
+      <div class="meter-note"><span id="pw-level">Strong</span><span id="pw-bits">0 bits</span></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var fmt = function (n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var num = function (v) { var n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) && n >= 0 ? n : 0; };
+
+  function copyText(text, btn, inputEl) {
+    var old = btn.textContent;
+    function flash(ok) {
+      btn.textContent = ok ? 'Copied' : 'Select and copy';
+      if (!ok && inputEl) { inputEl.focus(); inputEl.select(); }
+      setTimeout(function () { btn.textContent = old; }, 1500);
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { flash(true); }, function () { flash(legacyCopy(text)); });
+    } catch (e) { flash(legacyCopy(text)); }
+  }
+  function legacyCopy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  /* ---------- Tabs ---------- */
+  var names = ['split', 'units', 'dates', 'percent', 'qr', 'time', 'password', 'compare', 'vat', 'calc', 'currency', 'list'];
+  var tabs = $$('.tab'), panels = $$('.panel');
+  function show(name) {
+    tabs.forEach(function (t) {
+      var on = t.dataset.tab === name;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+    });
+    panels.forEach(function (p) { p.hidden = p.id !== 'panel-' + name; });
+    try { localStorage.setItem('pb-tab', name); } catch (e) {}
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { show(t.dataset.tab); });
+    t.addEventListener('keydown', function (e) {
+      var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!d) return;
+      var next = tabs[(i + d + tabs.length) % tabs.length];
+      show(next.dataset.tab); next.focus(); e.preventDefault();
+    });
+  });
+
+  /* ---------- VAT ---------- */
+  var vatMode = 'add';
+  function calcVat(amount, rate, mode) {
+    var r = rate / 100;
+    if (mode === 'add') { var v = amount * r; return { net: amount, vat: v, gross: amount + v }; }
+    var net = amount / (1 + r);
+    return { net: net, vat: amount - net, gross: amount };
+  }
+  function renderVat() {
+    var a = num($('#vat-amount').value), rate = num($('#vat-rate').value);
+    var x = calcVat(a, rate, vatMode);
+    $('#vat-net').textContent = fmt(x.net);
+    $('#vat-vat').textContent = fmt(x.vat);
+    $('#vat-gross').textContent = fmt(x.gross);
+    $('#vat-vat-label').textContent = 'VAT (' + String(+rate.toFixed(2)) + '%)';
+    $('#vat-amount-label').textContent = vatMode === 'add' ? 'Price before VAT (AED)' : 'Price including VAT (AED)';
+    $('#vat-add').setAttribute('aria-pressed', vatMode === 'add');
+    $('#vat-remove').setAttribute('aria-pressed', vatMode === 'remove');
+  }
+  $('#vat-add').addEventListener('click', function () { vatMode = 'add'; renderVat(); });
+  $('#vat-remove').addEventListener('click', function () { vatMode = 'remove'; renderVat(); });
+  $('#vat-amount').addEventListener('input', renderVat);
+  $('#vat-rate').addEventListener('input', renderVat);
+  $('#vat-copy').addEventListener('click', function () {
+    copyText('Before VAT: AED ' + $('#vat-net').textContent + ' | ' + $('#vat-vat-label').textContent + ': AED ' + $('#vat-vat').textContent + ' | Total: AED ' + $('#vat-gross').textContent, this);
+  });
+
+  /* ---------- Split ---------- */
+  var tip = 10, people = 4;
+  function renderSplit() {
+    var bill = num($('#split-bill').value);
+    var tipAmt = bill * tip / 100;
+    var total = bill + tipAmt;
+    var per = total / people, extra = 0;
+    if ($('#split-round').checked) {
+      var up = Math.ceil(per - 1e-9);
+      extra = (up - per) * people;
+      per = up;
+    }
+    $('#split-per').textContent = fmt(per);
+    $('#split-tip').textContent = fmt(tipAmt);
+    $('#split-tip-label').textContent = 'Tip (' + tip + '%)';
+    $('#split-total').textContent = fmt(per * people);
+    $('#split-extra').textContent = fmt(extra);
+    $('#split-extra-row').hidden = extra < 0.005;
+    $('#split-people').textContent = people;
+    $$('#tip-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', +c.dataset.tip === tip ? 'true' : 'false'); });
+  }
+  $('#split-bill').addEventListener('input', renderSplit);
+  $('#split-round').addEventListener('change', renderSplit);
+  $$('#tip-chips .chip').forEach(function (c) { c.addEventListener('click', function () { tip = +c.dataset.tip; renderSplit(); }); });
+  $('#people-minus').addEventListener('click', function () { people = Math.max(1, people - 1); renderSplit(); });
+  $('#people-plus').addEventListener('click', function () { people = Math.min(50, people + 1); renderSplit(); });
+
+  /* ---------- Units ---------- */
+  var UNITS = {
+    length: { val: 6, def: ['ft', 'cm'], list: [['mm', 0.001], ['cm', 0.01], ['m', 1], ['km', 1000], ['in', 0.0254], ['ft', 0.3048], ['yd', 0.9144], ['mi', 1609.344]] },
+    weight: { val: 2.5, def: ['lb', 'kg'], list: [['g', 0.001], ['kg', 1], ['oz', 0.028349523125], ['lb', 0.45359237], ['tola', 0.0116638038]], note: 'A tola is the traditional gold weight, about 11.66 g.' },
+    volume: { val: 1, def: ['cup', 'ml'], list: [['ml', 0.001], ['L', 1], ['tsp', 0.00492892159375], ['tbsp', 0.01478676478125], ['cup', 0.2365882365], ['fl oz', 0.0295735295625], ['gal', 3.785411784]], note: 'Cups, spoons, fluid ounces and gallons are the US sizes.' },
+    temp: { val: 40, def: ['°C', '°F'], list: [['°C'], ['°F'], ['K']] }
+  };
+  var unitCat = 'length';
+  var sNum = function (v) { var n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : NaN; };
+  function fmtN(x) {
+    if (!isFinite(x)) return '—';
+    var a = Math.abs(x);
+    if (a !== 0 && (a >= 1e12 || a < 1e-6)) return x.toExponential(4);
+    return Number(x.toPrecision(10)).toLocaleString('en-US', { maximumFractionDigits: 6 });
+  }
+  function unitFactor(name) {
+    var l = UNITS[unitCat].list;
+    for (var i = 0; i < l.length; i++) if (l[i][0] === name) return l[i][1];
+    return 1;
+  }
+  function convertUnit(v, from, to) {
+    if (unitCat === 'temp') {
+      var c = from === '°C' ? v : from === '°F' ? (v - 32) * 5 / 9 : v - 273.15;
+      return to === '°C' ? c : to === '°F' ? c * 9 / 5 + 32 : c + 273.15;
+    }
+    return v * unitFactor(from) / unitFactor(to);
+  }
+  function fillUnitSelects() {
+    var u = UNITS[unitCat];
+    ['from', 'to'].forEach(function (k, i) {
+      var sel = $('#unit-' + k);
+      sel.textContent = '';
+      u.list.forEach(function (it) {
+        var o = document.createElement('option');
+        o.value = it[0]; o.textContent = it[0];
+        sel.appendChild(o);
+      });
+      sel.value = u.def[i];
+    });
+    $('#unit-value').value = u.val;
+    $('#unit-note').textContent = u.note || '';
+  }
+  function renderUnits() {
+    $$('#unit-cats .chip').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.cat === unitCat ? 'true' : 'false'); });
+    var v = sNum($('#unit-value').value), from = $('#unit-from').value, to = $('#unit-to').value;
+    if (isNaN(v)) { $('#unit-out').textContent = '—'; $('#unit-line').textContent = 'Enter a number to convert.'; return; }
+    var r = convertUnit(v, from, to);
+    $('#unit-out').textContent = fmtN(r) + ' ' + to;
+    $('#unit-line').textContent = fmtN(v) + ' ' + from + ' = ' + fmtN(r) + ' ' + to;
+  }
+  $$('#unit-cats .chip').forEach(function (c) {
+    c.addEventListener('click', function () { unitCat = c.dataset.cat; fillUnitSelects(); renderUnits(); });
+  });
+  $('#unit-value').addEventListener('input', renderUnits);
+  $('#unit-from').addEventListener('change', renderUnits);
+  $('#unit-to').addEventListener('change', renderUnits);
+  $('#unit-swap').addEventListener('click', function () {
+    var f = $('#unit-from').value;
+    $('#unit-from').value = $('#unit-to').value;
+    $('#unit-to').value = f;
+    renderUnits();
+  });
+
+  /* ---------- Dates ---------- */
+  var DAY = 864e5;
+  function parseD(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : NaN;
+  }
+  function isoLocal(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function longDate(ms) {
+    return new Date(ms).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  }
+  function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+  var BASE_HINT = 'The end date starts on the next 2 December.';
+  function renderBetween() {
+    var a = parseD($('#dt-a').value), b = parseD($('#dt-b').value);
+    var ids = ['days', 'weeks', 'ymd'];
+    if (isNaN(a) || isNaN(b)) {
+      ids.forEach(function (k) { $('#dt-' + k).textContent = '—'; });
+      $('#dt-hint').textContent = 'Pick both dates to see the gap.';
+      return;
+    }
+    var lo = Math.min(a, b), hi = Math.max(a, b);
+    var days = Math.round((hi - lo) / DAY);
+    var weeks = Math.floor(days / 7), rem = days % 7;
+    var A = new Date(lo), B = new Date(hi);
+    var y = B.getUTCFullYear() - A.getUTCFullYear();
+    var m = B.getUTCMonth() - A.getUTCMonth();
+    var d = B.getUTCDate() - A.getUTCDate();
+    if (d < 0) { m -= 1; d += new Date(Date.UTC(B.getUTCFullYear(), B.getUTCMonth(), 0)).getUTCDate(); }
+    if (m < 0) { y -= 1; m += 12; }
+    var parts = [];
+    if (y) parts.push(plural(y, 'year'));
+    if (m) parts.push(plural(m, 'month'));
+    if (d || !parts.length) parts.push(plural(d, 'day'));
+    $('#dt-days').textContent = days.toLocaleString('en-US');
+    $('#dt-weeks').textContent = plural(weeks, 'week') + ', ' + plural(rem, 'day');
+    $('#dt-ymd').textContent = parts.join(', ');
+    $('#dt-hint').textContent = b < a ? 'The end date is before the start date, so the gap is shown as a positive number.' : BASE_HINT;
+  }
+
+  // [short name, JS weekday number (0 = Sunday), plural name], shown Monday first
+  var WEEK = [['Mon', 1, 'Mondays'], ['Tue', 2, 'Tuesdays'], ['Wed', 3, 'Wednesdays'], ['Thu', 4, 'Thursdays'], ['Fri', 5, 'Fridays'], ['Sat', 6, 'Saturdays'], ['Sun', 0, 'Sundays']];
+  var dayOn = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true };
+  var dayMode = 'count';
+  function dayCounts(g) { return dayMode === 'count' ? dayOn[g] : !dayOn[g]; }
+  function joinList(list) {
+    if (list.length <= 1) return list.join('');
+    return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
+  }
+  function describeDays() {
+    var names = WEEK.filter(function (w) { return dayOn[w[1]]; }).map(function (w) { return w[2]; });
+    if (dayMode === 'count') return names.length === 7 ? 'Counting every day.' : 'Counting ' + joinList(names) + ' only.';
+    return names.length ? 'Skipping ' + joinList(names) + '.' : 'Skipping no days, so every day counts.';
+  }
+  function renderAdd() {
+    $$('#dt-days-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', dayOn[+c.dataset.dow] ? 'true' : 'false'); });
+    $('#dt-mode-count').setAttribute('aria-pressed', dayMode === 'count' ? 'true' : 'false');
+    $('#dt-mode-skip').setAttribute('aria-pressed', dayMode === 'skip' ? 'true' : 'false');
+    var res = $('#dt-result'), cal = $('#dt-cal'), cnt = $('#dt-counted'), hint = $('#dt-add-hint');
+    function clear(msg) { res.textContent = '-'; cal.textContent = '-'; cnt.textContent = '-'; hint.textContent = msg; }
+    var start = parseD($('#dt-c').value), n = parseInt($('#dt-n').value, 10);
+    if (isNaN(start) || isNaN(n)) { clear('Pick a start date and a number of days.'); return; }
+    var any = false;
+    for (var g0 = 0; g0 < 7; g0++) if (dayCounts(g0)) any = true;
+    if (!any) { clear(dayMode === 'count' ? 'Select at least one weekday to count.' : 'Every weekday is skipped. Unselect at least one.'); return; }
+    n = Math.max(-36500, Math.min(36500, n));
+    var step = n < 0 ? -1 : 1, left = Math.abs(n), cur = start, counts = [0, 0, 0, 0, 0, 0, 0];
+    while (left > 0) {
+      cur += step * DAY;
+      var g = new Date(cur).getUTCDay();
+      if (dayCounts(g)) { left--; counts[g]++; }
+    }
+    var span = Math.round(Math.abs(cur - start) / DAY);
+    res.textContent = longDate(cur);
+    cal.textContent = span === 0 ? 'Same day' : plural(span, 'day') + (step > 0 ? ' later' : ' earlier');
+    var parts = [];
+    WEEK.forEach(function (w) { if (counts[w[1]]) parts.push(w[0] + ' ' + counts[w[1]]); });
+    cnt.textContent = parts.length ? parts.join(' · ') : '—';
+    hint.textContent = describeDays() + ' The start day is not counted.';
+  }
+  function initDates() {
+    var now = new Date();
+    var today = isoLocal(now);
+    var yr = now.getFullYear();
+    var nd = yr + '-12-02';
+    if (nd < today) nd = (yr + 1) + '-12-02';
+    $('#dt-a').value = today; $('#dt-b').value = nd; $('#dt-c').value = today;
+    renderBetween(); renderAdd();
+  }
+  ['#dt-a', '#dt-b'].forEach(function (id) { $(id).addEventListener('input', renderBetween); $(id).addEventListener('change', renderBetween); });
+  ['#dt-c', '#dt-n'].forEach(function (id) { $(id).addEventListener('input', renderAdd); $(id).addEventListener('change', renderAdd); });
+  $$('#dt-days-chips .chip').forEach(function (c) {
+    c.addEventListener('click', function () { var g = +c.dataset.dow; dayOn[g] = !dayOn[g]; renderAdd(); });
+  });
+  $$('#dt-presets .chip').forEach(function (c) {
+    c.addEventListener('click', function () {
+      var pre = c.dataset.preset;
+      for (var g = 0; g < 7; g++) {
+        dayOn[g] = pre === 'all' ? true : pre === 'weekdays' ? (g >= 1 && g <= 5) : pre === 'weekend' ? (g === 0 || g === 6) : false;
+      }
+      renderAdd();
+    });
+  });
+  $('#dt-mode-count').addEventListener('click', function () { dayMode = 'count'; renderAdd(); });
+  $('#dt-mode-skip').addEventListener('click', function () { dayMode = 'skip'; renderAdd(); });
+
+  /* ---------- Percent ---------- */
+  function fmtP(x) {
+    if (!isFinite(x)) return '—';
+    return Number(x.toFixed(2)).toLocaleString('en-US', { maximumFractionDigits: 2 }) + '%';
+  }
+  function signed(x, f) { return (x > 0 ? '+' : '') + f(x); }
+  function renderPercent() {
+    var v = function (id) { return sNum($(id).value); };
+    var a = v('#pc-a'), b = v('#pc-b');
+    $('#pc-r1').textContent = isNaN(a) || isNaN(b) ? '—' : fmtN(a / 100 * b);
+    var c = v('#pc-c'), d = v('#pc-d');
+    $('#pc-r2').textContent = fmtP(c / d * 100);
+    var e = v('#pc-e'), f = v('#pc-f');
+    $('#pc-r3').textContent = signed((f - e) / Math.abs(e) * 100, fmtP);
+    $('#pc-r3b').textContent = isNaN(e) || isNaN(f) ? '—' : signed(f - e, fmtN);
+    var cost = v('#pc-cost'), price = v('#pc-price');
+    var profit = price - cost;
+    $('#pc-profit').textContent = isNaN(profit) ? '—' : fmtN(profit);
+    $('#pc-margin').textContent = fmtP(profit / price * 100);
+    $('#pc-markup').textContent = fmtP(profit / cost * 100);
+  }
+  ['a', 'b', 'c', 'd', 'e', 'f', 'cost', 'price'].forEach(function (k) { $('#pc-' + k).addEventListener('input', renderPercent); });
+
+  /* ---------- Currency ---------- */
+  // [code, name, decimals, main]
+  var CUR = [
+    ['AED', 'UAE dirham', 2, 1], ['USD', 'US dollar', 2, 1], ['PHP', 'Philippine peso', 2, 1], ['IDR', 'Indonesian rupiah', 0, 1], ['INR', 'Indian rupee', 2, 1],
+    ['SAR', 'Saudi riyal', 2], ['QAR', 'Qatari riyal', 2], ['KWD', 'Kuwaiti dinar', 3], ['BHD', 'Bahraini dinar', 3], ['OMR', 'Omani rial', 3], ['JOD', 'Jordanian dinar', 3],
+    ['EUR', 'Euro', 2], ['GBP', 'British pound', 2], ['PKR', 'Pakistani rupee', 2], ['BDT', 'Bangladeshi taka', 2], ['LKR', 'Sri Lankan rupee', 2], ['NPR', 'Nepalese rupee', 2],
+    ['EGP', 'Egyptian pound', 2], ['CAD', 'Canadian dollar', 2], ['AUD', 'Australian dollar', 2], ['NZD', 'New Zealand dollar', 2], ['SGD', 'Singapore dollar', 2],
+    ['MYR', 'Malaysian ringgit', 2], ['THB', 'Thai baht', 2], ['CNY', 'Chinese yuan', 2], ['JPY', 'Japanese yen', 0], ['KRW', 'South Korean won', 0],
+    ['TRY', 'Turkish lira', 2], ['ZAR', 'South African rand', 2], ['CHF', 'Swiss franc', 2],
+    ['HKD', 'Hong Kong dollar', 2], ['TWD', 'New Taiwan dollar', 2], ['VND', 'Vietnamese dong', 0], ['MAD', 'Moroccan dirham', 2], ['TND', 'Tunisian dinar', 3],
+    ['DZD', 'Algerian dinar', 2], ['LBP', 'Lebanese pound', 0], ['IQD', 'Iraqi dinar', 0], ['ILS', 'Israeli shekel', 2], ['AFN', 'Afghan afghani', 2],
+    ['MMK', 'Myanmar kyat', 0], ['KHR', 'Cambodian riel', 0], ['LAK', 'Lao kip', 0], ['BND', 'Brunei dollar', 2], ['MVR', 'Maldivian rufiyaa', 2],
+    ['KES', 'Kenyan shilling', 2], ['UGX', 'Ugandan shilling', 0], ['TZS', 'Tanzanian shilling', 0], ['ETB', 'Ethiopian birr', 2], ['NGN', 'Nigerian naira', 2],
+    ['GHS', 'Ghanaian cedi', 2], ['ZMW', 'Zambian kwacha', 2], ['MUR', 'Mauritian rupee', 2], ['RUB', 'Russian ruble', 2], ['UAH', 'Ukrainian hryvnia', 2],
+    ['PLN', 'Polish zloty', 2], ['CZK', 'Czech koruna', 2], ['HUF', 'Hungarian forint', 2], ['RON', 'Romanian leu', 2], ['BGN', 'Bulgarian lev', 2],
+    ['SEK', 'Swedish krona', 2], ['NOK', 'Norwegian krone', 2], ['DKK', 'Danish krone', 2], ['ISK', 'Icelandic krona', 0], ['MXN', 'Mexican peso', 2],
+    ['BRL', 'Brazilian real', 2], ['ARS', 'Argentine peso', 2], ['CLP', 'Chilean peso', 0], ['COP', 'Colombian peso', 2], ['PEN', 'Peruvian sol', 2],
+    ['KZT', 'Kazakhstani tenge', 2], ['UZS', 'Uzbekistani som', 2], ['GEL', 'Georgian lari', 2], ['AMD', 'Armenian dram', 2], ['AZN', 'Azerbaijani manat', 2],
+    ['SOS', 'Somali shilling', 2], ['LYD', 'Libyan dinar', 3], ['YER', 'Yemeni rial', 2]
+  ];
+  // Extra words people might type when searching
+  var CUR_WORDS = {
+    AED: 'uae emirates dubai abu dhabi dirham', USD: 'america united states dollar', PHP: 'philippines filipino', IDR: 'indonesia', INR: 'india',
+    SAR: 'saudi arabia', QAR: 'qatar', KWD: 'kuwait', BHD: 'bahrain', OMR: 'oman', JOD: 'jordan', EUR: 'europe germany france italy spain',
+    GBP: 'uk britain england sterling', PKR: 'pakistan', BDT: 'bangladesh', LKR: 'sri lanka', NPR: 'nepal', EGP: 'egypt', CAD: 'canada', AUD: 'australia',
+    NZD: 'new zealand kiwi', SGD: 'singapore', MYR: 'malaysia', THB: 'thailand bhat bath thai', CNY: 'china renminbi rmb', JPY: 'japan', KRW: 'korea', TRY: 'turkey turkiye',
+    ZAR: 'south africa', CHF: 'switzerland', HKD: 'hong kong', TWD: 'taiwan', VND: 'vietnam', MAD: 'morocco', TND: 'tunisia', DZD: 'algeria', LBP: 'lebanon',
+    IQD: 'iraq', ILS: 'israel', AFN: 'afghanistan', MMK: 'myanmar burma', KHR: 'cambodia', LAK: 'laos', BND: 'brunei', MVR: 'maldives', KES: 'kenya',
+    UGX: 'uganda', TZS: 'tanzania', ETB: 'ethiopia', NGN: 'nigeria', GHS: 'ghana', ZMW: 'zambia', MUR: 'mauritius', RUB: 'russia', UAH: 'ukraine',
+    PLN: 'poland', CZK: 'czech czechia', HUF: 'hungary', RON: 'romania', BGN: 'bulgaria', SEK: 'sweden', NOK: 'norway', DKK: 'denmark', ISK: 'iceland',
+    MXN: 'mexico', BRL: 'brazil', ARS: 'argentina', CLP: 'chile', COP: 'colombia', PEN: 'peru', KZT: 'kazakhstan', UZS: 'uzbekistan', GEL: 'georgia',
+    AMD: 'armenia', AZN: 'azerbaijan', SOS: 'somalia', LYD: 'libya', YER: 'yemen'
+  };
+  // Built-in rates (per 1 USD), used until fresher ones arrive.
+  var PER_USD = {
+    AED: 3.6725, USD: 1, PHP: 63.000072, IDR: 17891.619611, INR: 96.883664,
+    SAR: 3.75, QAR: 3.64, KWD: 0.310233, BHD: 0.376, OMR: 0.384497, JOD: 0.709,
+    EUR: 0.892251, GBP: 0.756516, PKR: 277.018, BDT: 123.020115, LKR: 330.503569, NPR: 155.01308,
+    EGP: 52.374069, CAD: 1.423081, AUD: 1.437873, NZD: 1.785496, SGD: 1.281021,
+    MYR: 4.090984, THB: 33.66797, CNY: 6.715255, JPY: 158.033512, KRW: 1342.34042,
+    TRY: 49.278221, ZAR: 16.615355, CHF: 0.832501,
+    HKD: 7.848189, TWD: 31.962657, VND: 25868.38327, MAD: 9.937326, TND: 2.989453, DZD: 134.430343, LBP: 89500, IQD: 1428.8947, ILS: 3.068082, AFN: 64.845433,
+    MMK: 2096.253165, KHR: 4049.268414, LAK: 22280.187774, BND: 1.281021, MVR: 15.428575, KES: 129.641415, UGX: 3981.202747, TZS: 2618.547243, ETB: 161.489731,
+    NGN: 1331.013867, GHS: 11.64572, ZMW: 19.750829, MUR: 47.376339, RUB: 85.432836, UAH: 44.850201, PLN: 3.908572, CZK: 21.786477, HUF: 326.669292,
+    RON: 4.779274, BGN: 1.745085, SEK: 9.988226, NOK: 9.567476, DKK: 6.680183, ISK: 122.36204, MXN: 18.100987, BRL: 5.018279, ARS: 1518.4363, CLP: 977.542882,
+    COP: 3236.417658, PEN: 3.43997, KZT: 448.40035, UZS: 11808.26792, GEL: 2.597637, AMD: 361.62717, AZN: 1.698681, SOS: 570.988522, LYD: 6.409907, YER: 235.945769
+  };
+  var BUILTIN_TS = Date.UTC(2026, 9, 9);
+  var DEFAULT_PEG = 3.6725;
+  var OTHERS = ['PHP', 'IDR', 'INR'];
+  var base = {}, baseTs = BUILTIN_TS, baseLabel = 'Built-in rates from 9 October 2026';
+  Object.keys(PER_USD).forEach(function (k) { base[k] = PER_USD[k]; });
+  var peg = DEFAULT_PEG, edited = {}, rates = {};
+  try {
+    var savedRates = JSON.parse(localStorage.getItem('pb-rates'));
+    if (savedRates) {
+      if (savedRates.peg > 0) peg = savedRates.peg;
+      if (savedRates.edited) {
+        OTHERS.forEach(function (k) { if (savedRates.edited[k] > 0) edited[k] = savedRates.edited[k]; });
+      }
+    }
+  } catch (e) {}
+  function recompute() {
+    CUR.forEach(function (c) {
+      var k = c[0];
+      if (k === 'AED') rates[k] = 1;
+      else if (k === 'USD') rates[k] = 1 / peg;
+      else rates[k] = edited[k] !== undefined ? edited[k] : base[k] / peg;
+    });
+  }
+  recompute();
+  function ratesEdited() { return peg !== DEFAULT_PEG || Object.keys(edited).length > 0; }
+  function money(x, code) {
+    var d = 2;
+    CUR.forEach(function (c) { if (c[0] === code) d = c[2]; });
+    var a = Math.abs(x);
+    if (a > 0 && a < 1) d = d === 0 ? 2 : Math.max(d, 4);
+    return x.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function convertCur(amount, from, to) { return amount / rates[from] * rates[to]; }
+  function setRateInputs(skipKey, skipPeg) {
+    OTHERS.forEach(function (k) { if (k !== skipKey) $('#cur-rate-' + k).value = Number(rates[k].toPrecision(6)); });
+    if (!skipPeg) $('#cur-peg').value = String(peg);
+    $$('#cur-peg-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', +c.dataset.peg === peg ? 'true' : 'false'); });
+  }
+  function fillCurrency() {
+    ['from', 'to'].forEach(function (k, i) {
+      var sel = $('#cur-' + k), keep = sel.value;
+      sel.textContent = '';
+      [['Main currencies', 1], ['More currencies', 0]].forEach(function (g) {
+        var og = document.createElement('optgroup'); og.label = g[0];
+        CUR.forEach(function (c) {
+          if ((c[3] ? 1 : 0) !== g[1]) return;
+          var o = document.createElement('option');
+          o.value = c[0]; o.textContent = c[0] + ' – ' + c[1];
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
+      });
+      sel.value = keep || (i === 0 ? 'AED' : 'PHP');
+    });
+    setRateInputs();
+  }
+  function curName(code) { var r = ''; CUR.forEach(function (c) { if (c[0] === code) r = c[0] + ' \u2013 ' + c[1]; }); return r; }
+  var pickers = [];
+  function initPicker(key) {
+    var root = $('#pick-' + key), btn = $('#pick-' + key + '-btn'), pop = root.querySelector('.pick-pop'), q = pop.querySelector('input'), list = pop.querySelector('.pick-list'), sel = $('#cur-' + key);
+    var shown = [], active = 0;
+    function close() { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+    function choose(code) { sel.value = code; close(); sel.dispatchEvent(new Event('change')); btn.focus(); }
+    function build() {
+      var t = q.value.trim().toLowerCase();
+      list.textContent = ''; shown = [];
+      function add(c) {
+        var li = document.createElement('li'); li.setAttribute('role', 'option'); li.textContent = c[0] + ' \u2013 ' + c[1];
+        if (c[0] === sel.value) { li.className = 'sel'; li.setAttribute('aria-selected', 'true'); }
+        li.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        li.addEventListener('click', function () { choose(c[0]); });
+        list.appendChild(li); shown.push({ code: c[0], el: li });
+      }
+      function head(txt) { var h = document.createElement('li'); h.className = 'pick-h'; h.textContent = txt; h.setAttribute('role', 'presentation'); list.appendChild(h); }
+      var more = CUR.filter(function (c) { return !c[3]; }).sort(function (a, b) { return a[1] < b[1] ? -1 : 1; });
+      if (!t) {
+        head('Main currencies'); CUR.filter(function (c) { return c[3]; }).forEach(add);
+        head('More currencies'); more.forEach(add);
+      } else {
+        var hits = CUR.filter(function (c) {
+          var hay = (c[0] + ' ' + c[1] + ' ' + (CUR_WORDS[c[0]] || '')).toLowerCase();
+          return t.split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0; });
+        });
+        hits.sort(function (a, b) {
+          function rank(c) { var cl = c[0].toLowerCase(), n = c[1].toLowerCase(); return (cl === t ? 0 : cl.indexOf(t) === 0 ? 1 : (' ' + (CUR_WORDS[c[0]] || '') + ' ').indexOf(' ' + t + ' ') >= 0 ? 1.5 : n.indexOf(t) === 0 ? 2 : 3) + (c[3] ? 0 : 0.5); }
+          return rank(a) - rank(b);
+        });
+        hits.forEach(add);
+        if (!hits.length) { var no = document.createElement('li'); no.className = 'none'; no.textContent = 'No match. Try the country or the currency name.'; list.appendChild(no); }
+      }
+      active = 0; mark();
+    }
+    function mark() {
+      shown.forEach(function (s, i) { s.el.classList.toggle('on', i === active); });
+      if (shown[active] && shown[active].el.scrollIntoView) shown[active].el.scrollIntoView({ block: 'nearest' });
+    }
+    function open() {
+      pickers.forEach(function (p) { if (p !== api) p.close(); });
+      q.value = ''; build(); pop.hidden = false; btn.setAttribute('aria-expanded', 'true');
+      q.focus();
+    }
+    btn.addEventListener('click', function () { if (pop.hidden) open(); else close(); });
+    q.addEventListener('input', build);
+    q.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { active = Math.min(shown.length - 1, active + 1); mark(); e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { active = Math.max(0, active - 1); mark(); e.preventDefault(); }
+      else if (e.key === 'Enter') { if (shown[active]) choose(shown[active].code); e.preventDefault(); }
+      else if (e.key === 'Escape') { close(); btn.focus(); }
+    });
+    document.addEventListener('click', function (e) { if (!root.contains(e.target)) close(); });
+    var api = { close: close, refresh: function () { btn.textContent = curName(sel.value); } };
+    pickers.push(api);
+  }
+  function refreshPickers() { pickers.forEach(function (p) { p.refresh(); }); }
+  function renderCurrency() {
+    refreshPickers();
+    var amount = num($('#cur-amount').value);
+    var from = $('#cur-from').value, to = $('#cur-to').value;
+    $('#cur-out').textContent = money(convertCur(amount, from, to), to) + ' ' + to;
+    $('#cur-line').textContent = '1 ' + from + ' = ' + fmtN(convertCur(1, from, to)) + ' ' + to;
+    var box = $('#cur-all');
+    box.textContent = '';
+    CUR.forEach(function (c) {
+      if (c[0] === from || !(c[3] || c[0] === to)) return;
+      var row = document.createElement('div'); row.className = 'res';
+      var k = document.createElement('span'); k.className = 'k'; k.textContent = c[0] + ' · ' + c[1];
+      var n = document.createElement('span'); n.className = 'num'; n.textContent = money(convertCur(amount, from, c[0]), c[0]);
+      row.appendChild(k); row.appendChild(n); box.appendChild(row);
+    });
+    $('#cur-status').textContent = baseLabel + '.';
+    $('#cur-note').textContent = ratesEdited()
+      ? 'You have set your own rate for some currencies. They stay on this device, and the rest follow the latest rates.'
+      : 'These are mid-market rates. Exchange houses and banks use their own, so set yours below for exact amounts.';
+  }
+  function saveRates() {
+    try {
+      if (ratesEdited()) localStorage.setItem('pb-rates', JSON.stringify({ peg: peg, edited: edited }));
+      else localStorage.removeItem('pb-rates');
+    } catch (e) {}
+  }
+  function applyPeg(v, fromTyping) {
+    peg = v; recompute(); saveRates();
+    setRateInputs(null, fromTyping);
+    renderCurrency();
+  }
+  // Newest source wins: built-in < saved daily file < live. A source older than the one in use is ignored.
+  function applyRates(r, ts, label) {
+    if (!r || !(ts >= baseTs)) return false;
+    var n = 0;
+    CUR.forEach(function (c) {
+      var k = c[0];
+      if (k !== 'AED' && k !== 'USD' && r[k] > 0 && isFinite(r[k])) { base[k] = +r[k]; n++; }
+    });
+    if (n < 5) return false;
+    baseTs = ts;
+    baseLabel = label + ' from ' + new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+    recompute(); setRateInputs(); renderCurrency();
+    return true;
+  }
+  function getJSON(url) {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 8000) : null;
+    return fetch(url, ctl ? { signal: ctl.signal, cache: 'no-cache' } : { cache: 'no-cache' }).then(function (r) {
+      if (timer) clearTimeout(timer);
+      if (!r.ok) throw new Error('http');
+      return r.json();
+    });
+  }
+  function loadRates() {
+    if (!window.fetch) return;
+    getJSON('rates.json').then(function (j) {
+      applyRates(j && j.rates, j && j.ts, 'Daily saved rates');
+    }).catch(function () {}).then(function () {
+      return getJSON('https://open.er-api.com/v6/latest/USD');
+    }).then(function (j) {
+      if (j && j.result === 'success') applyRates(j.rates, (j.time_last_update_unix || 0) * 1000, 'Live rates');
+    }).catch(function () {});
+  }
+  initPicker('from'); initPicker('to');
+  $('#cur-amount').addEventListener('input', renderCurrency);
+  $('#cur-from').addEventListener('change', renderCurrency);
+  $('#cur-to').addEventListener('change', renderCurrency);
+  $('#cur-swap').addEventListener('click', function () {
+    var f = $('#cur-from').value;
+    $('#cur-from').value = $('#cur-to').value;
+    $('#cur-to').value = f;
+    renderCurrency();
+  });
+  $('#cur-peg').addEventListener('input', function () {
+    var v = num(this.value);
+    if (v > 0) applyPeg(v, true);
+  });
+  $$('#cur-peg-chips .chip').forEach(function (c) {
+    c.addEventListener('click', function () { applyPeg(+c.dataset.peg, false); });
+  });
+  OTHERS.forEach(function (k) {
+    $('#cur-rate-' + k).addEventListener('input', function () {
+      var v = num(this.value);
+      if (v > 0) { edited[k] = v; recompute(); saveRates(); setRateInputs(k, true); renderCurrency(); }
+    });
+  });
+  $('#cur-reset').addEventListener('click', function () {
+    peg = DEFAULT_PEG; edited = {}; recompute(); saveRates(); setRateInputs(); renderCurrency();
+  });
+
+  /* ---------- QR code ---------- */
+  var qrType = 'text';
+  var qrCanvas = document.createElement('canvas');
+  if (typeof qrcode === 'function' && qrcode.stringToBytesFuncs) qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+  function qrEsc(s) { return s.replace(/([\;,:"])/g, '\\$1'); }
+  function qrContent() {
+    if (qrType === 'text') {
+      var t = $('#qr-text').value.trim();
+      return t ? { data: t } : { msg: 'Type a link or some text to make a code.' };
+    }
+    if (qrType === 'wifi') {
+      var ssid = $('#qr-ssid').value;
+      if (!ssid) return { msg: 'Enter the network name to make a code.' };
+      var sec = $('#qr-sec').value;
+      var d = 'WIFI:T:' + sec + ';S:' + qrEsc(ssid) + ';';
+      if (sec !== 'nopass') d += 'P:' + qrEsc($('#qr-pass').value) + ';';
+      return { data: d + ';' };
+    }
+    if (qrType === 'whatsapp') {
+      var digits = $('#qr-wa-num').value.replace(/\D/g, '');
+      if (digits.length < 7) return { msg: 'Enter the number with its country code to make a code.' };
+      var m = $('#qr-wa-msg').value.trim();
+      return { data: 'https://wa.me/' + digits + (m ? '?text=' + encodeURIComponent(m) : '') };
+    }
+    var ph = $('#qr-phone').value.replace(/[^\d+]/g, '');
+    if (ph.replace(/\D/g, '').length < 3) return { msg: 'Enter a phone number to make a code.' };
+    return { data: 'tel:' + ph };
+  }
+  function renderQR() {
+    $$('#qr-types .chip').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.qr === qrType ? 'true' : 'false'); });
+    ['text', 'wifi', 'whatsapp', 'phone'].forEach(function (t) { $('#qr-f-' + t).hidden = t !== qrType; });
+    var img = $('#qr-img'), msg = $('#qr-msg'), dataEl = $('#qr-data'), copy = $('#qr-copy');
+    function none(text) { img.hidden = true; msg.hidden = false; msg.textContent = text; dataEl.textContent = ''; copy.disabled = true; }
+    if (typeof qrcode !== 'function') { none('The QR library did not load. Check your connection and reload the page.'); return; }
+    var c = qrContent();
+    if (!c.data) { none(c.msg); return; }
+    var q;
+    try { q = qrcode(0, $('#qr-ec').value); q.addData(c.data); q.make(); }
+    catch (e) { none('That is too long for a QR code. Shorten it and try again.'); return; }
+    var n = q.getModuleCount(), quiet = 4, scale = 8, size = (n + quiet * 2) * scale;
+    qrCanvas.width = size; qrCanvas.height = size;
+    var g = qrCanvas.getContext('2d');
+    g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, size, size);
+    g.fillStyle = '#000000';
+    for (var r = 0; r < n; r++) for (var cc = 0; cc < n; cc++) if (q.isDark(r, cc)) g.fillRect((cc + quiet) * scale, (r + quiet) * scale, scale, scale);
+    img.src = qrCanvas.toDataURL('image/png');
+    img.alt = 'QR code containing: ' + c.data;
+    img.hidden = false; msg.hidden = true; dataEl.textContent = c.data; copy.disabled = false;
+  }
+  $$('#qr-types .chip').forEach(function (c) { c.addEventListener('click', function () { qrType = c.dataset.qr; renderQR(); }); });
+  ['qr-text', 'qr-ssid', 'qr-pass', 'qr-wa-num', 'qr-wa-msg', 'qr-phone'].forEach(function (id) { $('#' + id).addEventListener('input', renderQR); });
+  ['qr-sec', 'qr-ec'].forEach(function (id) { $('#' + id).addEventListener('change', renderQR); });
+  $('#qr-copy').addEventListener('click', function () {
+    var btn = this, old = btn.textContent;
+    function flash(ok) {
+      btn.textContent = ok ? 'Copied' : 'Press and hold to save';
+      setTimeout(function () { btn.textContent = old; }, 1800);
+    }
+    try {
+      var blobP = new Promise(function (res) { qrCanvas.toBlob(res, 'image/png'); });
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]).then(function () { flash(true); }, function () { flash(false); });
+    } catch (e) { flash(false); }
+  });
+
+  /* ---------- Time zones ---------- */
+  var CITIES = [['UAE', 'Asia/Dubai'], ['Manila', 'Asia/Manila'], ['Jakarta', 'Asia/Jakarta'], ['India', 'Asia/Kolkata'], ['New Zealand', 'Pacific/Auckland']];
+  var dtfCache = {};
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function zoneParts(ms, tz) {
+    var f = dtfCache[tz] || (dtfCache[tz] = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }));
+    var o = {};
+    f.formatToParts(new Date(ms)).forEach(function (p) { o[p.type] = +p.value; });
+    if (o.hour === 24) o.hour = 0;
+    return o;
+  }
+  function zoneOffset(ms, tz) {
+    var o = zoneParts(ms, tz);
+    return Date.UTC(o.year, o.month - 1, o.day, o.hour, o.minute, o.second) - ms;
+  }
+  function zonedToUtc(y, mo, d, h, mi, tz) {
+    var guess = Date.UTC(y, mo - 1, d, h, mi), t = guess;
+    for (var i = 0; i < 3; i++) t = guess - zoneOffset(t, tz);
+    return t;
+  }
+  function renderTime() {
+    var list = $('#tz-list');
+    list.textContent = '';
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec($('#tz-date').value);
+    var t = /^(\d{2}):(\d{2})/.exec($('#tz-time').value);
+    if (!m || !t) {
+      var p0 = document.createElement('p'); p0.className = 'hint'; p0.textContent = 'Pick a date and a time to see the other cities.';
+      list.appendChild(p0);
+      return;
+    }
+    var src = $('#tz-zone').value;
+    var inst = zonedToUtc(+m[1], +m[2], +m[3], +t[1], +t[2], src);
+    var sp = zoneParts(inst, src);
+    var srcDay = Date.UTC(sp.year, sp.month - 1, sp.day);
+    CITIES.forEach(function (c) {
+      var p = zoneParts(inst, c[1]);
+      var day = Date.UTC(p.year, p.month - 1, p.day);
+      var diff = Math.round((day - srcDay) / DAY);
+      var hr = p.hour + p.minute / 60;
+      var work = hr >= 9 && hr < 18;
+      var edge = (hr >= 7 && hr < 9) || (hr >= 18 && hr < 22);
+      var label = work ? 'Working hours' : edge ? 'Early or late' : 'Night';
+      var dateText = new Date(day).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+      if (diff > 0) dateText += ' · next day'; else if (diff < 0) dateText += ' · previous day';
+      var row = document.createElement('div'); row.className = 'res';
+      var k = document.createElement('span'); k.className = 'k city';
+      var strong = document.createElement('strong'); strong.textContent = c[0];
+      var small = document.createElement('small');
+      var dot = document.createElement('i'); dot.className = 'dot' + (work ? ' work' : edge ? ' edge' : '');
+      small.appendChild(dot);
+      small.appendChild(document.createTextNode(label + (c[1] === src ? ' · time entered' : '')));
+      k.appendChild(strong); k.appendChild(small);
+      var n = document.createElement('span'); n.className = 'num';
+      n.appendChild(document.createTextNode(pad2(p.hour) + ':' + pad2(p.minute)));
+      var sd = document.createElement('span'); sd.className = 'sub-d'; sd.textContent = dateText;
+      n.appendChild(sd);
+      row.appendChild(k); row.appendChild(n); list.appendChild(row);
+    });
+  }
+  function timeNow() {
+    var o = zoneParts(Date.now(), $('#tz-zone').value);
+    $('#tz-date').value = o.year + '-' + pad2(o.month) + '-' + pad2(o.day);
+    $('#tz-time').value = pad2(o.hour) + ':' + pad2(o.minute);
+    renderTime();
+  }
+  function initTime() {
+    var sel = $('#tz-zone');
+    CITIES.forEach(function (c) {
+      var o = document.createElement('option'); o.value = c[1]; o.textContent = c[0];
+      sel.appendChild(o);
+    });
+    sel.value = 'Asia/Dubai';
+    timeNow();
+  }
+  ['#tz-date', '#tz-time'].forEach(function (id) { $(id).addEventListener('input', renderTime); $(id).addEventListener('change', renderTime); });
+  $('#tz-zone').addEventListener('change', renderTime);
+  $('#tz-now').addEventListener('click', timeNow);
+
+  /* ---------- Calculator ---------- */
+  var calcExpr = '', calcFresh = false, calcMsg = '', calcHist = [];
+  var MINUS = '−', TIMES = '×', DIVIDE = '÷';
+  function isOp(ch) { return ch === '+' || ch === MINUS || ch === TIMES || ch === DIVIDE; }
+  function evalExpr(str) {
+    var s = str.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+    var i = 0;
+    function peek() { return s.charAt(i); }
+    function parseExpr() {
+      var t = parseTerm(), v = t.v;
+      while (peek() === '+' || peek() === '-') {
+        var op = s.charAt(i++);
+        var r = parseTerm();
+        var rv = r.pct ? v * r.v : r.v;
+        v = op === '+' ? v + rv : v - rv;
+      }
+      return v;
+    }
+    function parseTerm() {
+      var f = parseFactor(), v = f.v, pct = f.pct;
+      while (peek() === '*' || peek() === '/') {
+        var op = s.charAt(i++);
+        var r = parseFactor();
+        pct = false;
+        if (op === '/') { if (r.v === 0) throw new Error('div0'); v = v / r.v; } else v = v * r.v;
+      }
+      return { v: v, pct: pct };
+    }
+    function parseFactor() {
+      if (peek() === '-') { i++; var f = parseFactor(); return { v: -f.v, pct: f.pct }; }
+      if (peek() === '+') { i++; return parseFactor(); }
+      var v = parsePrimary(), pct = false;
+      while (peek() === '%') { i++; v = v / 100; pct = true; }
+      return { v: v, pct: pct };
+    }
+    function parsePrimary() {
+      if (peek() === '(') {
+        i++;
+        var v = parseExpr();
+        if (peek() !== ')') throw new Error('syntax');
+        i++;
+        return v;
+      }
+      var m = /^(\d+\.?\d*|\.\d+)/.exec(s.slice(i));
+      if (!m) throw new Error('syntax');
+      i += m[0].length;
+      return parseFloat(m[0]);
+    }
+    var result = parseExpr();
+    if (i !== s.length) throw new Error('syntax');
+    return result;
+  }
+  function plainNum(v) {
+    var t = Number(v.toPrecision(12));
+    var str = String(t);
+    if (/e/i.test(str)) str = t.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 });
+    return str.replace('-', MINUS);
+  }
+  function fmtCalc(v) { return Number(v.toPrecision(12)).toLocaleString('en-US', { maximumFractionDigits: 10 }).replace('-', MINUS); }
+  function groupExpr(e) {
+    return e.replace(/\d+(\.\d*)?/g, function (m) {
+      var parts = m.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.join('.');
+    });
+  }
+  function closeUp(e) {
+    var t = e.replace(/[+−×÷(]+$/, '');
+    var open = (t.match(/\(/g) || []).length - (t.match(/\)/g) || []).length;
+    for (var k = 0; k < open; k++) t += ')';
+    return t;
+  }
+  function calcTry(e) {
+    var t = closeUp(e);
+    if (!t) return { empty: true };
+    try {
+      var v = evalExpr(t);
+      if (!isFinite(v)) return { msg: 'Cannot divide by zero' };
+      return { v: v };
+    } catch (err) {
+      return { msg: err.message === 'div0' ? 'Cannot divide by zero' : 'Incomplete expression' };
+    }
+  }
+  function renderCalc() {
+    var ex = $('#calc-expr'), rs = $('#calc-result');
+    ex.textContent = calcExpr ? groupExpr(calcExpr) : '0';
+    ex.className = 'calc-expr' + (calcExpr.length > 16 ? ' long' : '');
+    var plain = /^−?[\d.]+$/.test(calcExpr);
+    var r = calcExpr && !plain ? calcTry(calcExpr) : {};
+    rs.textContent = calcMsg || (r.v !== undefined ? '= ' + fmtCalc(r.v) : '');
+    var box = $('#calc-hist'), wrap = $('#calc-hist-wrap');
+    box.textContent = '';
+    calcHist.forEach(function (h) {
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = h.text;
+      b.setAttribute('aria-label', 'Use ' + h.plain.replace(MINUS, 'minus ') + ' again');
+      b.addEventListener('click', function () { calcExpr = h.plain; calcFresh = true; calcMsg = ''; renderCalc(); });
+      li.appendChild(b); box.appendChild(li);
+    });
+    wrap.hidden = calcHist.length === 0;
+  }
+  function calcEquals() {
+    if (!calcExpr) { renderCalc(); return; }
+    var r = calcTry(calcExpr);
+    if (r.v === undefined) { calcMsg = r.msg || ''; renderCalc(); return; }
+    var plain = plainNum(r.v);
+    if (plain !== calcExpr) {
+      calcHist.unshift({ text: groupExpr(calcExpr) + ' = ' + fmtCalc(r.v), plain: plain });
+      calcHist = calcHist.slice(0, 5);
+    }
+    calcExpr = plain; calcFresh = true;
+    renderCalc();
+  }
+  function calcPress(k) {
+    calcMsg = '';
+    if (k === 'C') { calcExpr = ''; calcFresh = false; renderCalc(); return; }
+    if (k === '=') { calcEquals(); return; }
+    if (calcFresh && (/^\d$/.test(k) || k === '.' || k === '()')) calcExpr = '';
+    calcFresh = false;
+    if (calcExpr.length >= 60 && k !== 'BS') { renderCalc(); return; }
+    var last = calcExpr.slice(-1);
+    if (k === 'BS') {
+      calcExpr = calcExpr.slice(0, -1);
+    } else if (/^\d$/.test(k)) {
+      if (last === ')' || last === '%') calcExpr += TIMES;
+      calcExpr += k;
+    } else if (k === '.') {
+      var seg = /[\d.]*$/.exec(calcExpr)[0];
+      if (seg.indexOf('.') < 0) {
+        if (last === ')' || last === '%') calcExpr += TIMES;
+        calcExpr += seg ? '.' : '0.';
+      }
+    } else if (isOp(k)) {
+      if (!calcExpr) {
+        if (k === MINUS) calcExpr = MINUS;
+      } else if (last === '(') {
+        if (k === MINUS) calcExpr += k;
+      } else if (isOp(last)) {
+        if (k === MINUS && (last === TIMES || last === DIVIDE)) calcExpr += k;
+        else {
+          calcExpr = calcExpr.replace(/[+−×÷]+$/, '');
+          var l2 = calcExpr.slice(-1);
+          if ((!calcExpr || l2 === '(') ? k === MINUS : true) calcExpr += k;
+        }
+      } else {
+        calcExpr += k;
+      }
+    } else if (k === '%') {
+      if (/[\d)%]/.test(last)) calcExpr += '%';
+    } else if (k === '()') {
+      var open = (calcExpr.match(/\(/g) || []).length - (calcExpr.match(/\)/g) || []).length;
+      if (/[\d)%]/.test(last)) calcExpr += open > 0 ? ')' : TIMES + '(';
+      else calcExpr += '(';
+    }
+    renderCalc();
+  }
+  $('#calc-keys').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button[data-k]') : null;
+    if (b) calcPress(b.getAttribute('data-k'));
+  });
+  (function () {
+    var bs = d_bs(), timer = null, rep = null;
+    function d_bs() { return document.querySelector('#calc-keys [data-k="BS"]'); }
+    function stop() { clearTimeout(timer); clearInterval(rep); timer = rep = null; }
+    bs.addEventListener('pointerdown', function () {
+      stop();
+      timer = setTimeout(function () { rep = setInterval(function () { calcPress('BS'); }, 90); }, 450);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { bs.addEventListener(ev, stop); });
+  })();
+  $('#panel-calc').addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target.closest && e.target.closest('#calc-hist')) return;
+    var k = e.key, m = null;
+    if (/^\d$/.test(k)) m = k;
+    else if (k === '.' || k === ',') m = '.';
+    else if (k === '+') m = '+';
+    else if (k === '-') m = MINUS;
+    else if (k === '*' || k === 'x' || k === 'X') m = TIMES;
+    else if (k === '/') m = DIVIDE;
+    else if (k === '%') m = '%';
+    else if (k === '(' || k === ')') m = '()';
+    else if (k === 'Enter' || k === '=') m = '=';
+    else if (k === 'Backspace') m = 'BS';
+    else if (k === 'Escape' || k === 'Delete') m = 'C';
+    if (m !== null) { e.preventDefault(); calcPress(m); }
+  });
+
+  /* ---------- Price comparison ---------- */
+  var CMP = {
+    weight: { units: [['g', 1], ['kg', 1000], ['oz', 28.349523125], ['lb', 453.59237]], per: [[1000, 'kg'], [100, '100 g']], defU: 'g' },
+    volume: { units: [['ml', 1], ['L', 1000], ['fl oz', 29.5735295625], ['gal', 3785.411784]], per: [[1000, 'litre'], [100, '100 ml']], defU: 'ml' },
+    count: { units: [['pcs', 1], ['dozen', 12]], per: [[1, 'piece']], defU: 'pcs' }
+  };
+  var cmpKind = 'weight', cmpUid = 0, cmpLines = [];
+  var cmpItems = [
+    { n: '', p: '12.50', k: '1', a: '500', u: 'g' },
+    { n: '', p: '21', k: '1', a: '1', u: 'kg' },
+    { n: '', p: '14.90', k: '3', a: '200', u: 'g' }
+  ];
+  function cmpName(it, i) { return it.n.trim() || 'Item ' + String.fromCharCode(65 + i); }
+  function cmpFactor(u) {
+    var l = CMP[cmpKind].units;
+    for (var i = 0; i < l.length; i++) if (l[i][0] === u) return l[i][1];
+    return 1;
+  }
+  function cmpBase(it) {
+    var total = num(it.k) * num(it.a) * cmpFactor(it.u), price = num(it.p);
+    return total > 0 && price > 0 ? price / total : null;
+  }
+  function cmpInput(val, mode, ph) {
+    var i = document.createElement('input');
+    i.type = 'text'; i.className = 'input mono'; i.value = val; i.autocomplete = 'off';
+    i.id = 'cmp-' + (++cmpUid);
+    if (mode) i.setAttribute('inputmode', mode);
+    if (ph) i.placeholder = ph;
+    return i;
+  }
+  function cmpField(label, input) {
+    var f = document.createElement('div'); f.className = 'field';
+    var l = document.createElement('label'); l.className = 'label'; l.textContent = label; l.htmlFor = input.id;
+    f.appendChild(l); f.appendChild(input);
+    return f;
+  }
+  function cmpBuild() {
+    var box = $('#cmp-items');
+    box.textContent = '';
+    cmpLines = [];
+    $$('#cmp-kinds .chip').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.cmp === cmpKind ? 'true' : 'false'); });
+    cmpItems.forEach(function (it, idx) {
+      var row = document.createElement('div'); row.className = 'cmp-item';
+      var head = document.createElement('div'); head.className = 'cmp-head';
+      var name = cmpInput(it.n, '', 'Item ' + String.fromCharCode(65 + idx));
+      name.className = 'input';
+      name.setAttribute('aria-label', 'Name of item ' + (idx + 1));
+      var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'icon-btn'; rm.textContent = '×';
+      rm.setAttribute('aria-label', 'Remove item ' + (idx + 1));
+      rm.disabled = cmpItems.length <= 2;
+      head.appendChild(name); head.appendChild(rm);
+      var g1 = document.createElement('div'); g1.className = 'cmp-grid';
+      var price = cmpInput(it.p, 'decimal'), packs = cmpInput(it.k, 'decimal');
+      g1.appendChild(cmpField('Price (AED)', price)); g1.appendChild(cmpField('Number of packs (in this price)', packs));
+      var g2 = document.createElement('div'); g2.className = 'cmp-grid';
+      var amount = cmpInput(it.a, 'decimal');
+      var unit = document.createElement('select'); unit.className = 'input'; unit.id = 'cmp-' + (++cmpUid);
+      CMP[cmpKind].units.forEach(function (u) {
+        var o = document.createElement('option'); o.value = u[0]; o.textContent = u[0];
+        unit.appendChild(o);
+      });
+      unit.value = it.u;
+      g2.appendChild(cmpField('Size of one pack', amount)); g2.appendChild(cmpField('Unit', unit));
+      var line = document.createElement('div'); line.className = 'cmp-line';
+      name.addEventListener('input', function () { it.n = name.value; cmpRender(); });
+      price.addEventListener('input', function () { it.p = price.value; cmpRender(); });
+      packs.addEventListener('input', function () { it.k = packs.value; cmpRender(); });
+      amount.addEventListener('input', function () { it.a = amount.value; cmpRender(); });
+      unit.addEventListener('change', function () { it.u = unit.value; cmpRender(); });
+      rm.addEventListener('click', function () { cmpItems.splice(cmpItems.indexOf(it), 1); cmpBuild(); });
+      var sc = document.createElement('div'); sc.className = 'cmp-scan';
+      var sbtn = document.createElement('button'); sbtn.type = 'button'; sbtn.className = 'btn'; sbtn.textContent = 'Scan price tag';
+      var sfile = document.createElement('input'); sfile.type = 'file'; sfile.accept = 'image/*'; sfile.setAttribute('capture', 'environment'); sfile.hidden = true;
+      sfile.setAttribute('aria-label', 'Photo of the price tag for item ' + (idx + 1));
+      var sst = document.createElement('p'); sst.className = 'hint'; sst.setAttribute('aria-live', 'polite'); sst.textContent = it.s || '';
+      sbtn.addEventListener('click', function () { sfile.value = ''; sfile.click(); });
+      sfile.addEventListener('change', function () { if (sfile.files && sfile.files[0]) cmpScan(sfile.files[0], it, sbtn, sst); });
+      sc.appendChild(sbtn); sc.appendChild(sfile); sc.appendChild(sst);
+      row.appendChild(head); row.appendChild(sc); row.appendChild(g1); row.appendChild(g2); row.appendChild(line);
+      box.appendChild(row);
+      cmpLines.push(line);
+    });
+    $('#cmp-add').disabled = cmpItems.length >= 6;
+    cmpRender();
+  }
+  function cmpRender() {
+    var K = CMP[cmpKind], ranked = [];
+    function perText(b) {
+      return K.per.map(function (pp) { return 'AED ' + money(b * pp[0], 'AED') + ' per ' + pp[1]; }).join(' · ');
+    }
+    cmpItems.forEach(function (it, i) {
+      var b = cmpBase(it);
+      if (b === null) { cmpLines[i].textContent = 'Enter a price and a size to see the unit price.'; return; }
+      cmpLines[i].textContent = perText(b);
+      ranked.push({ name: cmpName(it, i), base: b });
+    });
+    var box = $('#cmp-results');
+    box.textContent = '';
+    var note = $('#cmp-note');
+    if (ranked.length < 2) { note.textContent = 'Fill in at least two items to compare them.'; return; }
+    ranked.sort(function (a, b) { return a.base - b.base; });
+    var best = ranked[0].base, worst = ranked[ranked.length - 1].base;
+    ranked.forEach(function (r) {
+      var more = (r.base / best - 1) * 100;
+      var isBest = more < 0.005;
+      var row = document.createElement('div'); row.className = 'res';
+      var k = document.createElement('span'); k.className = 'k city';
+      var strong = document.createElement('strong'); strong.textContent = r.name;
+      var small = document.createElement('small');
+      var dot = document.createElement('i'); dot.className = 'dot' + (isBest ? ' work' : '');
+      small.appendChild(dot); small.appendChild(document.createTextNode(perText(r.base)));
+      k.appendChild(strong); k.appendChild(small);
+      var n = document.createElement('span'); n.className = 'num' + (isBest ? ' good' : '');
+      n.textContent = isBest ? 'Best value' : '+' + more.toFixed(1) + '%';
+      row.appendChild(k); row.appendChild(n); box.appendChild(row);
+    });
+    var saving = (1 - best / worst) * 100;
+    note.textContent = saving < 0.005
+      ? 'These all cost the same per unit.'
+      : 'The best value is ' + saving.toFixed(1) + '% cheaper per unit than the dearest. Percentages on the right show how much more each one costs than the best.';
+  }
+  function cmpSetKind(k) {
+    cmpKind = k;
+    var ok = CMP[cmpKind].units.map(function (u) { return u[0]; });
+    cmpItems.forEach(function (it) { if (ok.indexOf(it.u) < 0) it.u = CMP[cmpKind].defU; });
+  }
+  $$('#cmp-kinds .chip').forEach(function (c) {
+    c.addEventListener('click', function () { cmpSetKind(c.dataset.cmp); cmpBuild(); });
+  });
+
+  /* ---------- Scan a price tag ---------- */
+  function parseTag(raw) {
+    var t = String(raw || '').replace(/[×✕]/g, 'x').replace(/\r/g, '\n');
+    t = t.replace(/(\d),(\d{2})(?!\d)/g, '$1.$2');
+    var low = t.toLowerCase();
+    var UNIT = 'kgs?|kilograms?|kilos?|grams?|gms?|gr|g|mls?|millilit(?:re|er)s?|ltrs?|lit(?:re|er)s?|l|fl\\.?\\s?oz|oz|lbs?|gal|pcs|pc|pieces?|dozen';
+    var re = new RegExp('(?:(\\d{1,3})\\s*x\\s*)?(\\d+(?:\\.\\d+)?)\\s*(' + UNIT + ')(?![a-z])', 'g');
+    var sizes = [], m;
+    while ((m = re.exec(low))) sizes.push({ i: m.index, e: m.index + m[0].length, k: m[1] ? +m[1] : 1, a: +m[2], u: m[3], per: /(?:\/|per)\s*$/.test(low.slice(Math.max(0, m.index - 6), m.index)) });
+    function canon(u) {
+      u = u.replace(/\s+/g, '').replace('.', '');
+      if (/^(kg|kgs|kilo|kilos|kilogram|kilograms)$/.test(u)) return ['weight', 'kg'];
+      if (/^(g|gm|gms|gr|gram|grams)$/.test(u)) return ['weight', 'g'];
+      if (/^(oz)$/.test(u)) return ['weight', 'oz'];
+      if (/^(lb|lbs)$/.test(u)) return ['weight', 'lb'];
+      if (/^(ml|mls|millilitre|milliliter|millilitres|milliliters)$/.test(u)) return ['volume', 'ml'];
+      if (/^(l|ltr|ltrs|litre|liter|litres|liters)$/.test(u)) return ['volume', 'L'];
+      if (/^(floz)$/.test(u)) return ['volume', 'fl oz'];
+      if (/^(gal)$/.test(u)) return ['volume', 'gal'];
+      if (/^(pcs|pc|piece|pieces)$/.test(u)) return ['count', 'pcs'];
+      if (/^(dozen)$/.test(u)) return ['count', 'dozen'];
+      return null;
+    }
+    var size = null;
+    for (var i = 0; i < sizes.length; i++) {
+      var c = canon(sizes[i].u);
+      if (!c || sizes[i].per || sizes[i].a <= 0) continue;
+      size = { k: sizes[i].k, a: sizes[i].a, kind: c[0], u: c[1] };
+      break;
+    }
+    function inSize(pos) { return sizes.some(function (z) { return pos >= z.i && pos < z.e; }); }
+    var cur = '(?:aed|dhs?|dirhams?|d\\.?h\\.?)';
+    var price = null, pm;
+    var r1 = new RegExp(cur + '\\s*[:.]?\\s*(\\d{1,5}(?:\\.\\d{1,2})?)(?!\\d)(?!\\s*(?:\\/|per)\\s*[a-z])', 'g');
+    var r2 = new RegExp('(\\d{1,5}(?:\\.\\d{1,2})?)\\s*' + cur + '(?![a-z])(?!\\s*(?:\\/|per)\\s*[a-z])', 'g');
+    while (!price && (pm = r1.exec(low))) if (!inSize(pm.index + pm[0].length - 1) && +pm[1] > 0) price = +pm[1];
+    while (!price && (pm = r2.exec(low))) if (!inSize(pm.index) && +pm[1] > 0) price = +pm[1];
+    if (!price) {
+      var r3 = /(\d{1,4}\.\d{2})(?!\d)/g, cands = [];
+      while ((pm = r3.exec(low))) {
+        var after = low.slice(pm.index + pm[0].length, pm.index + pm[0].length + 8);
+        if (inSize(pm.index) || /^\s*(?:\/|per)/.test(after) || /%/.test(after.slice(0, 2))) continue;
+        cands.push(+pm[1]);
+      }
+      if (cands.length) price = cands[0];
+    }
+    return { price: price, size: size };
+  }
+  var ocrWorker = null;
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = function () { rej(new Error('script')); };
+      document.head.appendChild(el);
+    });
+  }
+  function getWorker(onStatus) {
+    if (ocrWorker) return ocrWorker;
+    ocrWorker = (window.Tesseract ? Promise.resolve() : loadScript('https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js')).then(function () {
+      return window.Tesseract.createWorker('eng', 1, { logger: function (m) { if (m && m.status && onStatus.fn) onStatus.fn(m); } });
+    });
+    ocrWorker.catch(function () { ocrWorker = null; });
+    return ocrWorker;
+  }
+  function photoToCanvas(file) {
+    return new Promise(function (res, rej) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var max = 1600, sc = Math.min(1, max / Math.max(img.width, img.height));
+        var cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(img.width * sc)); cv.height = Math.max(1, Math.round(img.height * sc));
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url); res(cv);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('image')); };
+      img.src = url;
+    });
+  }
+  var statusRef = { fn: null };
+  function cmpScan(file, it, btn, out) {
+    btn.disabled = true;
+    out.textContent = 'Reading the photo. The first scan can take a little while.';
+    statusRef.fn = function (m) {
+      if (m.status === 'recognizing text') out.textContent = 'Reading the photo… ' + Math.round((m.progress || 0) * 100) + '%';
+      else if (/load|init/.test(m.status)) out.textContent = 'Getting the reader ready…';
+    };
+    photoToCanvas(file).then(function (cv) {
+      return getWorker(statusRef).then(function (w) { return w.recognize(cv); });
+    }).then(function (r) {
+      var f = parseTag(r.data.text), bits = [];
+      if (f.size && f.size.kind !== cmpKind) cmpSetKind(f.size.kind);
+      if (f.price) { it.p = String(f.price); bits.push('price ' + f.price); }
+      if (f.size) { it.a = String(f.size.a); it.u = f.size.u; it.k = String(f.size.k); bits.push('size ' + f.size.k + ' \u00d7 ' + f.size.a + ' ' + f.size.u); }
+      it.s = bits.length ? 'Found ' + bits.join(', ') + '. Please check them.' : 'Could not find a price or size. Try a closer, sharper photo, or type them in.';
+      cmpBuild();
+    }).catch(function () {
+      it.s = 'The photo reader could not start. It needs an internet connection and a normal browser page. You can type the numbers instead.';
+      btn.disabled = false; out.textContent = it.s;
+    });
+  }
+  $('#cmp-add').addEventListener('click', function () {
+    if (cmpItems.length >= 6) return;
+    cmpItems.push({ n: '', p: '', k: '1', a: '', u: CMP[cmpKind].defU });
+    cmpBuild();
+    var names = $$('#cmp-items .cmp-head input');
+    if (names.length) names[names.length - 1].focus();
+  });
+
+  /* ---------- Password ---------- */
+  var SETS = {
+    lower: 'abcdefghijklmnopqrstuvwxyz',
+    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    digits: '0123456789',
+    symbols: '!@#$%^&*()-_=+[]{};:,.?'
+  };
+  function randInt(max) {
+    var lim = Math.floor(0x100000000 / max) * max;
+    var b = new Uint32Array(1);
+    do { crypto.getRandomValues(b); } while (b[0] >= lim);
+    return b[0] % max;
+  }
+  function genPassword() {
+    var len = +$('#pw-len').value, avoid = $('#pw-avoid').checked;
+    var pools = ['lower', 'upper', 'digits', 'symbols']
+      .filter(function (k) { return $('#pw-' + k).checked; })
+      .map(function (k) { return avoid ? SETS[k].replace(/[Il1O0o]/g, '') : SETS[k]; });
+    if (!pools.length) return { pw: '', bits: 0 };
+    var all = pools.join('');
+    var out = pools.map(function (p) { return p[randInt(p.length)]; });
+    while (out.length < len) out.push(all[randInt(all.length)]);
+    for (var i = out.length - 1; i > 0; i--) {
+      var j = randInt(i + 1), tmp = out[i]; out[i] = out[j]; out[j] = tmp;
+    }
+    return { pw: out.slice(0, len).join(''), bits: len * Math.log2(all.length) };
+  }
+  function renderPassword() {
+    $('#pw-len-out').textContent = $('#pw-len').value;
+    var r = genPassword();
+    $('#pw-out').value = r.pw;
+    var bits = Math.round(r.bits);
+    var level, color;
+    if (bits < 40) { level = 'Weak'; color = 'var(--bad)'; }
+    else if (bits < 60) { level = 'Fair'; color = 'var(--warn)'; }
+    else if (bits < 80) { level = 'Strong'; color = 'var(--good)'; }
+    else { level = 'Very strong'; color = 'var(--good)'; }
+    $('#pw-level').textContent = level;
+    $('#pw-bits').textContent = bits + ' bits';
+    var bar = $('#pw-bar');
+    bar.style.width = Math.min(100, bits / 128 * 100) + '%';
+    bar.style.backgroundColor = color;
+  }
+  $('#pw-len').addEventListener('input', renderPassword);
+  $('#pw-new').addEventListener('click', renderPassword);
+  ['lower', 'upper', 'digits', 'symbols', 'avoid'].forEach(function (k) {
+    $('#pw-' + k).addEventListener('change', function (e) {
+      if (k !== 'avoid' && !['lower', 'upper', 'digits', 'symbols'].some(function (x) { return $('#pw-' + x).checked; })) e.target.checked = true;
+      renderPassword();
+    });
+  });
+  $('#pw-copy').addEventListener('click', function () { copyText($('#pw-out').value, this, $('#pw-out')); });
+
+  /* ---------- Boot ---------- */
+  /* ---------- Checklist ---------- */
+  var ckItems = [];
+  try { var rawCk = JSON.parse(localStorage.getItem('pb-list') || '[]'); if (Array.isArray(rawCk)) ckItems = rawCk.filter(function (x) { return x && typeof x.t === 'string'; }).map(function (x) { return { t: x.t, d: !!x.d }; }); } catch (e) {}
+  function ckSave() { try { localStorage.setItem('pb-list', JSON.stringify(ckItems)); } catch (e) {} }
+  function ckRender() {
+    var ul = $('#ck-list'); ul.textContent = '';
+    ckItems.forEach(function (it, i) {
+      var li = document.createElement('li'); li.className = 'ck-item' + (it.d ? ' done' : '');
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'ck-text';
+      b.setAttribute('role', 'checkbox'); b.setAttribute('aria-checked', it.d ? 'true' : 'false');
+      var box = document.createElement('span'); box.className = 'ck-box'; box.setAttribute('aria-hidden', 'true'); box.textContent = it.d ? '\u2713' : '';
+      var tx = document.createElement('span'); tx.textContent = it.t;
+      b.appendChild(box); b.appendChild(tx);
+      b.addEventListener('click', function () { it.d = !it.d; ckSave(); ckRender(); });
+      var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'icon-btn'; rm.textContent = '\u00d7';
+      rm.setAttribute('aria-label', 'Remove ' + it.t);
+      rm.addEventListener('click', function () { ckItems.splice(i, 1); ckSave(); ckRender(); });
+      li.appendChild(b); li.appendChild(rm); ul.appendChild(li);
+    });
+    var done = ckItems.filter(function (x) { return x.d; }).length;
+    $('#ck-count').textContent = ckItems.length ? done + ' of ' + ckItems.length + ' ticked' : 'Nothing here yet.';
+    $('#ck-clear-done').disabled = !done;
+    $('#ck-clear-all').disabled = !ckItems.length;
+  }
+  function ckAdd() {
+    var inp = $('#ck-new'), t = inp.value.trim();
+    if (!t) return;
+    ckItems.push({ t: t.slice(0, 200), d: false }); inp.value = ''; ckSave(); ckRender(); inp.focus();
+  }
+  $('#ck-add').addEventListener('click', ckAdd);
+  $('#ck-new').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ckAdd(); } });
+  $('#ck-clear-done').addEventListener('click', function () { ckItems = ckItems.filter(function (x) { return !x.d; }); ckSave(); ckRender(); });
+  $('#ck-clear-all').addEventListener('click', function () { ckItems = []; ckSave(); ckRender(); });
+
+  renderVat(); renderSplit(); fillUnitSelects(); renderUnits(); initDates(); renderPercent(); fillCurrency(); renderCurrency(); loadRates(); renderQR(); initTime(); renderCalc(); cmpBuild(); ckRender(); renderPassword();
+  var saved = null;
+  try { saved = localStorage.getItem('pb-tab'); } catch (e) {}
+  show(names.indexOf(saved) >= 0 ? saved : names[0]);
+})();
+</script>
+
+</body>
+</html>

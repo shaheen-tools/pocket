@@ -1,0 +1,35 @@
+name: Update exchange rates
+
+on:
+  schedule:
+    - cron: "15 1 * * *"   # every day at 01:15 UTC, after the source updates
+  workflow_dispatch: {}      # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Fetch rates
+        run: |
+          set -e
+          curl -fsS --retry 3 --max-time 30 https://open.er-api.com/v6/latest/USD -o raw.json
+          jq -e '.result == "success" and (.rates.AED > 0) and (.rates.INR > 0)' raw.json > /dev/null
+          jq '{
+            updated: (.time_last_update_unix | strftime("%Y-%m-%d")),
+            ts: (.time_last_update_unix * 1000),
+            source: "open.er-api.com",
+            rates: .rates
+          }' raw.json > rates.json
+          rm raw.json
+      - name: Commit if changed
+        run: |
+          if git diff --quiet rates.json; then echo "No change"; exit 0; fi
+          git config user.name "rates-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add rates.json
+          git commit -m "Update exchange rates"
+          git push
