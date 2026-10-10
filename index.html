@@ -322,6 +322,16 @@ textarea.input.short{min-height:84px}
 .pick-list li.pick-h{cursor:default;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;padding:8px 10px 2px}
 .pick-list li.pick-h:hover{background:transparent}
 .pick-list li.none{cursor:default;color:var(--muted)}
+/* signature */
+.sg-pad{position:relative;border:1px dashed var(--muted);border-radius:8px;background:#fff;touch-action:none}
+.sg-pad canvas{display:block;width:100%;height:200px;touch-action:none;cursor:crosshair}
+.sg-hint{position:absolute;inset:0;display:grid;place-items:center;color:#8a97a3;pointer-events:none;font-size:.95rem}
+.sg-prev{background:repeating-conic-gradient(#d9dfe4 0 25%,#fff 0 50%) 0 0/16px 16px;border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center}
+.sg-prev img{max-width:100%;max-height:120px}
+.sg-row{display:flex;flex-wrap:wrap;gap:8px}
+#sg-colors .chip{min-width:0}
+/* sizes */
+#sz-cats .chip{min-width:0}
 /* checklist */
 .ck-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
 .ck-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
@@ -369,7 +379,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <button class="tab" role="tab" id="tab-units" data-tab="units" aria-selected="false" aria-controls="panel-units">Units</button>
     <button class="tab" role="tab" id="tab-dates" data-tab="dates" aria-selected="false" aria-controls="panel-dates">Dates</button>
     <button class="tab" role="tab" id="tab-percent" data-tab="percent" aria-selected="false" aria-controls="panel-percent">Percent</button>
-    <button class="tab" role="tab" id="tab-qr" data-tab="qr" aria-selected="false" aria-controls="panel-qr">QR</button>
+    <button class="tab" role="tab" id="tab-qr" data-tab="qr" aria-selected="false" aria-controls="panel-qr">QR &amp; Barcode</button>
     <button class="tab" role="tab" id="tab-time" data-tab="time" aria-selected="false" aria-controls="panel-time">Time</button>
     <button class="tab" role="tab" id="tab-password" data-tab="password" aria-selected="false" aria-controls="panel-password">Password</button>
     <button class="tab" role="tab" id="tab-compare" data-tab="compare" aria-selected="false" aria-controls="panel-compare">Compare</button>
@@ -377,6 +387,8 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <button class="tab" role="tab" id="tab-calc" data-tab="calc" aria-selected="false" aria-controls="panel-calc">Calculator</button>
     <button class="tab" role="tab" id="tab-currency" data-tab="currency" aria-selected="false" aria-controls="panel-currency">Currency</button>
     <button class="tab" role="tab" id="tab-list" data-tab="list" aria-selected="false" aria-controls="panel-list">Checklist</button>
+    <button class="tab" role="tab" id="tab-sizes" data-tab="sizes" aria-selected="false" aria-controls="panel-sizes">Sizes</button>
+    <button class="tab" role="tab" id="tab-sign" data-tab="sign" aria-selected="false" aria-controls="panel-sign">Signature</button>
   </div>
 
   <!-- VAT -->
@@ -622,13 +634,14 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
 
   <!-- QR -->
   <section class="panel" id="panel-qr" role="tabpanel" aria-labelledby="tab-qr" hidden>
-    <h2>QR code maker</h2>
-    <p class="lede">Make a code for a link, a Wi-Fi login, a WhatsApp chat or a phone number. It is drawn in your browser and nothing is uploaded.</p>
+    <h2>QR code and barcode maker</h2>
+    <p class="lede">Make a QR code for a link, a Wi-Fi login, a WhatsApp chat or a phone number, or a barcode for a label or product number. It is drawn in your browser and nothing is uploaded.</p>
     <div class="chips" id="qr-types" role="group" aria-label="What the code holds">
       <button type="button" class="chip" data-qr="text" aria-pressed="true">Link or text</button>
       <button type="button" class="chip" data-qr="wifi" aria-pressed="false">Wi-Fi</button>
       <button type="button" class="chip" data-qr="whatsapp" aria-pressed="false">WhatsApp</button>
       <button type="button" class="chip" data-qr="phone" aria-pressed="false">Phone</button>
+      <button type="button" class="chip" data-qr="barcode" aria-pressed="false">Barcode</button>
     </div>
     <div class="fields" id="qr-f-text">
       <div class="field"><label class="label" for="qr-text">Link or text</label><textarea class="input short" id="qr-text" spellcheck="false">https://www.example.com</textarea></div>
@@ -647,6 +660,18 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <div class="fields" id="qr-f-phone" hidden>
       <div class="field"><label class="label" for="qr-phone">Phone number</label><input class="input mono" id="qr-phone" type="text" inputmode="tel" autocomplete="off" placeholder="+971 5X XXX XXXX"></div>
     </div>
+    <div class="fields" id="qr-f-barcode" hidden>
+      <div class="field"><label class="label" for="bc-format">Barcode type</label>
+        <select class="input" id="bc-format">
+          <option value="CODE128">Code 128 (letters and numbers)</option>
+          <option value="EAN13">EAN-13 (shop products)</option>
+          <option value="UPC">UPC-A (US products)</option>
+          <option value="CODE39">Code 39 (capital letters and numbers)</option>
+        </select>
+      </div>
+      <div class="field"><label class="label" for="bc-text">Number or text</label><input class="input mono" id="bc-text" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ABC-12345"></div>
+      <p class="hint" id="bc-hint"></p>
+    </div>
     <div class="qr-frame">
       <img id="qr-img" alt="QR code" hidden>
       <p class="qr-msg" id="qr-msg">Make a code above.</p>
@@ -656,7 +681,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <button type="button" class="btn primary" id="qr-copy" disabled>Copy image</button>
     </div>
     <p class="hint" style="text-align:center">If copying does not work, press and hold the code (or right-click it) to save the image.</p>
-    <div class="field">
+    <div class="field" id="qr-ec-wrap">
       <label class="label" for="qr-ec">Error correction</label>
       <select class="input" id="qr-ec">
         <option value="L">Low, smallest code</option>
@@ -752,6 +777,46 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     </div>
   </section>
 
+  <!-- Sizes -->
+  <section class="panel" id="panel-sign" role="tabpanel" aria-labelledby="tab-sign" hidden>
+    <h2>Signature maker</h2>
+    <p class="lede">Sign with your finger or mouse and save it as a PNG with a transparent background, ready to drop onto a PDF or document.</p>
+    <div class="sg-pad"><canvas id="sg-canvas" aria-label="Signature drawing area"></canvas><div class="sg-hint" id="sg-hint">Sign here</div></div>
+    <div class="row">
+      <div class="field"><label class="label" for="sg-width">Pen thickness</label><input class="input" type="range" id="sg-width" min="2" max="10" value="4"></div>
+      <div class="field"><span class="label">Ink colour</span>
+        <div class="chips" id="sg-colors" role="group" aria-label="Ink colour">
+          <button type="button" class="chip" data-c="#111111" aria-pressed="true">Black</button>
+          <button type="button" class="chip" data-c="#1F3FBF" aria-pressed="false">Blue</button>
+        </div></div>
+    </div>
+    <div class="sg-row">
+      <button type="button" class="btn" id="sg-undo">Undo</button>
+      <button type="button" class="btn" id="sg-clear">Clear</button>
+      <a class="btn primary" id="sg-save" download="signature.png" href="#" role="button" aria-disabled="true" style="display:inline-grid;place-items:center;text-decoration:none">Save PNG</a>
+    </div>
+    <div class="sg-prev" id="sg-prevbox" hidden><img id="sg-img" alt="Signature preview"></div>
+    <p class="lede" id="sg-note">If Save PNG does nothing on your phone, press and hold the preview and choose Save image.</p>
+  </section>
+  <section class="panel" id="panel-sizes" role="tabpanel" aria-labelledby="tab-sizes" hidden>
+    <h2>Size converter</h2>
+    <p class="lede">Shoe, clothing and ring sizes between systems. Brands differ, so treat it as a guide and check the brand's own chart.</p>
+    <div class="chips" id="sz-cats" role="group" aria-label="What you are sizing">
+      <button type="button" class="chip" data-sz="shoes-m" aria-pressed="true">Men's shoes</button>
+      <button type="button" class="chip" data-sz="shoes-w" aria-pressed="false">Women's shoes</button>
+      <button type="button" class="chip" data-sz="shoes-k" aria-pressed="false">Kids' shoes</button>
+      <button type="button" class="chip" data-sz="cloth-w" aria-pressed="false">Women's clothes</button>
+      <button type="button" class="chip" data-sz="cloth-m" aria-pressed="false">Men's clothes</button>
+      <button type="button" class="chip" data-sz="ring" aria-pressed="false">Rings</button>
+    </div>
+    <div class="row">
+      <div class="field"><label class="label" for="sz-sys">My size is in</label><select class="input" id="sz-sys"></select></div>
+      <div class="field"><label class="label" for="sz-val">Size</label><select class="input" id="sz-val"></select></div>
+    </div>
+    <div class="results" id="sz-out" aria-live="polite"></div>
+    <p class="hint" id="sz-note"></p>
+  </section>
+
   <!-- Password -->
   <section class="panel" id="panel-password" role="tabpanel" aria-labelledby="tab-password" hidden>
     <h2>Password generator</h2>
@@ -780,6 +845,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
 <script>
 (function () {
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -811,7 +877,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   }
 
   /* ---------- Tabs ---------- */
-  var names = ['split', 'units', 'dates', 'percent', 'qr', 'time', 'password', 'compare', 'vat', 'calc', 'currency', 'list'];
+  var names = ['split', 'units', 'dates', 'percent', 'qr', 'time', 'password', 'compare', 'vat', 'calc', 'currency', 'list', 'sizes', 'sign'];
   var tabs = $$('.tab'), panels = $$('.panel');
   function show(name) {
     tabs.forEach(function (t) {
@@ -1359,11 +1425,39 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     if (ph.replace(/\D/g, '').length < 3) return { msg: 'Enter a phone number to make a code.' };
     return { data: 'tel:' + ph };
   }
+  var BC_HINT = {
+    CODE128: 'Any letters, numbers and common symbols.',
+    EAN13: 'Type 12 digits and the last check digit is added, or type all 13 to check them.',
+    UPC: 'Type 11 digits and the last check digit is added, or type all 12 to check them.',
+    CODE39: 'Capital letters, numbers, and the symbols - . $ / + % and space.'
+  };
+  var BC_ERR = {
+    EAN13: 'EAN-13 needs 12 or 13 digits, and the last digit must be right if you type 13.',
+    UPC: 'UPC-A needs 11 or 12 digits, and the last digit must be right if you type 12.',
+    CODE39: 'Code 39 takes capital letters, numbers and - . $ / + % and space only.',
+    CODE128: 'That text cannot be made into a Code 128 barcode.'
+  };
+  function renderBarcode(img, msg, dataEl, copy, none) {
+    var fmt = $('#bc-format').value, text = $('#bc-text').value.trim();
+    $('#bc-hint').textContent = BC_HINT[fmt] || '';
+    if (typeof JsBarcode !== 'function') { none('The barcode library did not load. Check your connection and reload the page.'); return; }
+    if (!text) { none('Type a number or text to make a barcode.'); return; }
+    var ok = true;
+    try {
+      JsBarcode(qrCanvas, text, { format: fmt, width: 3, height: 120, margin: 24, displayValue: true, fontSize: 22, textMargin: 8, background: '#FFFFFF', lineColor: '#000000', valid: function (v) { ok = v; } });
+    } catch (e) { ok = false; }
+    if (!ok) { none(BC_ERR[fmt]); return; }
+    img.src = qrCanvas.toDataURL('image/png');
+    img.alt = 'Barcode for: ' + text;
+    img.hidden = false; msg.hidden = true; dataEl.textContent = text; copy.disabled = false;
+  }
   function renderQR() {
     $$('#qr-types .chip').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.qr === qrType ? 'true' : 'false'); });
-    ['text', 'wifi', 'whatsapp', 'phone'].forEach(function (t) { $('#qr-f-' + t).hidden = t !== qrType; });
+    ['text', 'wifi', 'whatsapp', 'phone', 'barcode'].forEach(function (t) { $('#qr-f-' + t).hidden = t !== qrType; });
+    $('#qr-ec-wrap').hidden = qrType === 'barcode';
     var img = $('#qr-img'), msg = $('#qr-msg'), dataEl = $('#qr-data'), copy = $('#qr-copy');
     function none(text) { img.hidden = true; msg.hidden = false; msg.textContent = text; dataEl.textContent = ''; copy.disabled = true; }
+    if (qrType === 'barcode') { renderBarcode(img, msg, dataEl, copy, none); return; }
     if (typeof qrcode !== 'function') { none('The QR library did not load. Check your connection and reload the page.'); return; }
     var c = qrContent();
     if (!c.data) { none(c.msg); return; }
@@ -1381,8 +1475,8 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     img.hidden = false; msg.hidden = true; dataEl.textContent = c.data; copy.disabled = false;
   }
   $$('#qr-types .chip').forEach(function (c) { c.addEventListener('click', function () { qrType = c.dataset.qr; renderQR(); }); });
-  ['qr-text', 'qr-ssid', 'qr-pass', 'qr-wa-num', 'qr-wa-msg', 'qr-phone'].forEach(function (id) { $('#' + id).addEventListener('input', renderQR); });
-  ['qr-sec', 'qr-ec'].forEach(function (id) { $('#' + id).addEventListener('change', renderQR); });
+  ['qr-text', 'qr-ssid', 'qr-pass', 'qr-wa-num', 'qr-wa-msg', 'qr-phone', 'bc-text'].forEach(function (id) { $('#' + id).addEventListener('input', renderQR); });
+  ['qr-sec', 'qr-ec', 'bc-format'].forEach(function (id) { $('#' + id).addEventListener('change', renderQR); });
   $('#qr-copy').addEventListener('click', function () {
     var btn = this, old = btn.textContent;
     function flash(ok) {
@@ -1954,6 +2048,159 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   $('#pw-copy').addEventListener('click', function () { copyText($('#pw-out').value, this, $('#pw-out')); });
 
   /* ---------- Boot ---------- */
+  /* ---------- Sizes ---------- */
+  function szRange(a, b, step) { var o = []; for (var v = a; v <= b + 1e-9; v += step) o.push(Math.round(v * 100) / 100); return o; }
+  // [EU, US, UK, foot length cm]
+  var SZ_SHOE_M = [[39, 6.5, 6, 24.5], [40, 7, 6, 25], [40.5, 7.5, 6.5, 25.5], [41, 8, 7, 26], [42, 8.5, 7.5, 26.5], [42.5, 9, 8, 27], [43, 9.5, 8.5, 27.5], [44, 10, 9, 28], [44.5, 10.5, 9.5, 28.5], [45, 11, 10, 29], [45.5, 11.5, 10.5, 29.5], [46, 12, 11, 30], [47.5, 13, 12, 31]];
+  var SZ_SHOE_W = [[35.5, 5, 2.5, 22], [36, 5.5, 3, 22.5], [36.5, 6, 3.5, 23], [37.5, 6.5, 4, 23.5], [38, 7, 4.5, 24], [38.5, 7.5, 5, 24.5], [39, 8, 5.5, 25], [40, 8.5, 6, 25.5], [40.5, 9, 6.5, 26], [41, 9.5, 7, 26.5], [42, 10, 7.5, 27], [42.5, 10.5, 8, 27.5], [43, 11, 8.5, 28]];
+  var SZ_SHOE_K = szRange(11, 22.5, 0.5).map(function (cm) {
+    var uk = Math.round((cm / 0.8467 - 10.6) * 2) / 2, eu = Math.round((cm + 1.5) * 1.5 * 2) / 2;
+    return [eu, uk + 1, uk, cm];
+  });
+  // [label, UK, US, EU, bust or chest cm]
+  var SZ_CLOTH_W = [['XS', 6, 2, 34, 82], ['S', 8, 4, 36, 86], ['S/M', 10, 6, 38, 90], ['M', 12, 8, 40, 94], ['L', 14, 10, 42, 98], ['XL', 16, 12, 44, 102], ['XXL', 18, 14, 46, 106], ['3XL', 20, 16, 48, 110]];
+  var SZ_CLOTH_M = [['XS', 34, 34, 44, 86], ['S', 36, 36, 46, 91], ['M', 38, 38, 48, 97], ['L', 40, 40, 50, 102], ['XL', 42, 42, 52, 107], ['XXL', 44, 44, 54, 112], ['3XL', 46, 46, 56, 117]];
+  var SZ = {
+    'shoes-m': { sys: ['EU', 'US', 'UK', 'Foot length (cm)'], rows: SZ_SHOE_M, note: 'Men\'s adult sizes. US and UK differ by about one size. Foot length is the heel to the longest toe.' },
+    'shoes-w': { sys: ['EU', 'US', 'UK', 'Foot length (cm)'], rows: SZ_SHOE_W, note: 'Women\'s adult sizes. Between sizes, most people go up.' },
+    'shoes-k': { sys: ['EU', 'US', 'UK', 'Foot length (cm)'], rows: SZ_SHOE_K, note: 'Kids\' sizes are worked out from foot length and are only approximate. Measure the foot, and leave about 1 cm of growing room.' },
+    'cloth-w': { sys: ['Letter', 'UK', 'US', 'EU', 'Bust (cm)'], rows: SZ_CLOTH_W, note: 'Women\'s tops and dresses. Bust is the body measurement, not the garment.' },
+    'cloth-m': { sys: ['Letter', 'UK or US', 'US', 'EU', 'Chest (cm)'], rows: SZ_CLOTH_M, note: 'Men\'s tops and jackets. Chest is the body measurement, not the garment.' }
+  };
+  var szCat = 'shoes-m', szSysIdx = 0;
+  var UK_RING = 'HIJKLMNOPQRSTUVWXYZ';
+  function ukRing(c) {
+    var i = Math.round((c - 46.5) / 1.27 * 2) / 2;
+    if (i < 0 || i > 18) return '–';
+    var whole = Math.floor(i), half = i - whole > 0;
+    return UK_RING.charAt(whole) + (half ? '½' : '');
+  }
+  function szRing(us) {
+    var d = 11.63 + 0.8128 * us, c = d * Math.PI;
+    return { us: us, d: d, c: c, eu: Math.round(c * 2) / 2 };
+  }
+  function szOptions() {
+    var sel = $('#sz-val'), keep = sel.value;
+    sel.textContent = '';
+    if (szCat === 'ring') {
+      szRange(3, 13, 0.5).forEach(function (us) { var o = document.createElement('option'); o.value = String(us); o.textContent = 'US ' + us; sel.appendChild(o); });
+      sel.value = '7'; return;
+    }
+    var T = SZ[szCat];
+    T.rows.forEach(function (row, i) {
+      var o = document.createElement('option'); o.value = String(i);
+      o.textContent = String(row[szSysIdx]) + (T.sys[szSysIdx].indexOf('cm') >= 0 ? ' cm' : '');
+      sel.appendChild(o);
+    });
+    sel.value = keep && sel.querySelector('option[value="' + keep + '"]') ? keep : String(Math.floor(T.rows.length / 2));
+  }
+  function szSystems() {
+    var sel = $('#sz-sys'); sel.textContent = '';
+    if (szCat === 'ring') { var o = document.createElement('option'); o.value = '0'; o.textContent = 'US size'; sel.appendChild(o); sel.disabled = true; return; }
+    sel.disabled = false;
+    SZ[szCat].sys.forEach(function (n, i) { var o = document.createElement('option'); o.value = String(i); o.textContent = n; sel.appendChild(o); });
+    if (szSysIdx >= SZ[szCat].sys.length) szSysIdx = 0;
+    sel.value = String(szSysIdx);
+  }
+  function szLine(label, value) {
+    var row = document.createElement('div'); row.className = 'res';
+    var k = document.createElement('span'); k.className = 'k'; k.textContent = label;
+    var n = document.createElement('span'); n.className = 'num'; n.textContent = value;
+    row.appendChild(k); row.appendChild(n); return row;
+  }
+  function renderSizes() {
+    /* ---- signature ---- */
+  var sgCv = $('#sg-canvas'), sgCtx = sgCv.getContext('2d'), sgStrokes = [], sgCur = null, sgColor = '#111111';
+  function sgSize() {
+    var w = sgCv.clientWidth || 320, h = sgCv.clientHeight || 200, r = window.devicePixelRatio || 1;
+    sgCv.width = Math.round(w * r); sgCv.height = Math.round(h * r);
+    sgCtx.setTransform(r, 0, 0, r, 0, 0); sgDraw();
+  }
+  function sgDraw() {
+    var w = sgCv.clientWidth || 320, h = sgCv.clientHeight || 200;
+    sgCtx.clearRect(0, 0, w, h);
+    sgCtx.lineCap = 'round'; sgCtx.lineJoin = 'round';
+    sgStrokes.forEach(function (st) {
+      sgCtx.strokeStyle = st.c; sgCtx.fillStyle = st.c; sgCtx.lineWidth = st.w;
+      var p = st.p;
+      if (p.length === 1) { sgCtx.beginPath(); sgCtx.arc(p[0][0], p[0][1], st.w / 2, 0, Math.PI * 2); sgCtx.fill(); return; }
+      sgCtx.beginPath(); sgCtx.moveTo(p[0][0], p[0][1]);
+      for (var i = 1; i < p.length - 1; i++) {
+        sgCtx.quadraticCurveTo(p[i][0], p[i][1], (p[i][0] + p[i + 1][0]) / 2, (p[i][1] + p[i + 1][1]) / 2);
+      }
+      sgCtx.lineTo(p[p.length - 1][0], p[p.length - 1][1]); sgCtx.stroke();
+    });
+  }
+  function sgPt(e) { var b = sgCv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; }
+  function sgExport() {
+    var save = $('#sg-save'), box = $('#sg-prevbox');
+    if (!sgStrokes.length) {
+      $('#sg-hint').hidden = false; box.hidden = true;
+      save.setAttribute('aria-disabled', 'true'); save.removeAttribute('href'); return;
+    }
+    $('#sg-hint').hidden = true;
+    var minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9, pad = 12;
+    sgStrokes.forEach(function (st) { st.p.forEach(function (q) {
+      minx = Math.min(minx, q[0] - st.w); miny = Math.min(miny, q[1] - st.w);
+      maxx = Math.max(maxx, q[0] + st.w); maxy = Math.max(maxy, q[1] + st.w);
+    }); });
+    var sc = 2, w = Math.max(10, maxx - minx + pad * 2), h = Math.max(10, maxy - miny + pad * 2);
+    var out = document.createElement('canvas'); out.width = Math.round(w * sc); out.height = Math.round(h * sc);
+    var c = out.getContext('2d'); c.scale(sc, sc); c.translate(pad - minx, pad - miny);
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    sgStrokes.forEach(function (st) {
+      c.strokeStyle = st.c; c.fillStyle = st.c; c.lineWidth = st.w; var p = st.p;
+      if (p.length === 1) { c.beginPath(); c.arc(p[0][0], p[0][1], st.w / 2, 0, Math.PI * 2); c.fill(); return; }
+      c.beginPath(); c.moveTo(p[0][0], p[0][1]);
+      for (var i = 1; i < p.length - 1; i++) c.quadraticCurveTo(p[i][0], p[i][1], (p[i][0] + p[i + 1][0]) / 2, (p[i][1] + p[i + 1][1]) / 2);
+      c.lineTo(p[p.length - 1][0], p[p.length - 1][1]); c.stroke();
+    });
+    var url = out.toDataURL('image/png');
+    $('#sg-img').src = url; box.hidden = false;
+    save.href = url; save.setAttribute('aria-disabled', 'false');
+  }
+  sgCv.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    try { sgCv.setPointerCapture(e.pointerId); } catch (x) {}
+    sgCur = { c: sgColor, w: +$('#sg-width').value, p: [sgPt(e)] }; sgStrokes.push(sgCur); sgDraw();
+  });
+  sgCv.addEventListener('pointermove', function (e) {
+    if (!sgCur) return; e.preventDefault(); sgCur.p.push(sgPt(e)); sgDraw();
+  });
+  function sgEnd() { if (!sgCur) return; sgCur = null; sgExport(); }
+  sgCv.addEventListener('pointerup', sgEnd); sgCv.addEventListener('pointercancel', sgEnd);
+  $('#sg-undo').addEventListener('click', function () { sgStrokes.pop(); sgDraw(); sgExport(); });
+  $('#sg-clear').addEventListener('click', function () { sgStrokes = []; sgDraw(); sgExport(); });
+  $('#sg-save').addEventListener('click', function (e) { if (!sgStrokes.length) e.preventDefault(); });
+  $$('#sg-colors .chip').forEach(function (b) { b.addEventListener('click', function () {
+    sgColor = b.dataset.c; $$('#sg-colors .chip').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+  }); });
+  window.addEventListener('resize', sgSize);
+  var sgTab = $('#tab-sign'); if (sgTab) sgTab.addEventListener('click', function () { setTimeout(sgSize, 0); });
+  $$('#sz-cats .chip').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.sz === szCat ? 'true' : 'false'); });
+    var out = $('#sz-out'); out.textContent = '';
+    if (szCat === 'ring') {
+      var r = szRing(+$('#sz-val').value);
+      out.appendChild(szLine('US', String(r.us)));
+      out.appendChild(szLine('UK', ukRing(r.c)));
+      out.appendChild(szLine('EU (finger circumference)', String(r.eu)));
+      out.appendChild(szLine('Inside diameter', r.d.toFixed(1) + ' mm'));
+      out.appendChild(szLine('Circumference', r.c.toFixed(1) + ' mm'));
+      $('#sz-note').textContent = 'To measure, wrap a strip of paper round the base of the finger, mark where it meets, and measure the length in mm. That is the circumference, so use the EU size. Half sizes are rounded.';
+      return;
+    }
+    var T = SZ[szCat], row = T.rows[+$('#sz-val').value] || T.rows[0];
+    T.sys.forEach(function (name, i) {
+      if (i === szSysIdx) return;
+      out.appendChild(szLine(name, String(row[i]) + (name.indexOf('cm') >= 0 ? ' cm' : '')));
+    });
+    $('#sz-note').textContent = T.note;
+  }
+  function szRefresh(resetSys) { if (resetSys) szSysIdx = 0; szSystems(); szOptions(); renderSizes(); }
+  $$('#sz-cats .chip').forEach(function (c) { c.addEventListener('click', function () { szCat = c.dataset.sz; szRefresh(true); }); });
+  $('#sz-sys').addEventListener('change', function () { szSysIdx = +this.value; szOptions(); renderSizes(); });
+  $('#sz-val').addEventListener('change', renderSizes);
+
   /* ---------- Checklist ---------- */
   var ckItems = [];
   try { var rawCk = JSON.parse(localStorage.getItem('pb-list') || '[]'); if (Array.isArray(rawCk)) ckItems = rawCk.filter(function (x) { return x && typeof x.t === 'string'; }).map(function (x) { return { t: x.t, d: !!x.d }; }); } catch (e) {}
@@ -2000,7 +2247,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     });
   })();
 
-  renderVat(); renderSplit(); fillUnitSelects(); renderUnits(); initDates(); renderPercent(); fillCurrency(); renderCurrency(); loadRates(); renderQR(); initTime(); renderCalc(); cmpBuild(); ckRender(); renderPassword();
+  renderVat(); renderSplit(); fillUnitSelects(); renderUnits(); initDates(); renderPercent(); fillCurrency(); renderCurrency(); loadRates(); renderQR(); initTime(); renderCalc(); cmpBuild(); ckRender(); szRefresh(true); renderPassword();
   var saved = null;
   try { saved = localStorage.getItem('pb-tab'); } catch (e) {}
   show(names.indexOf(saved) >= 0 ? saved : names[0]);
