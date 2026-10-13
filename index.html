@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Pocket Tool</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=Dancing+Script:wght@600&family=Caveat:wght@600&family=Homemade+Apple&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: a yellow tape-measure strip under the title, a row of drawer-label tabs, one working panel at a time. */
 :root{
@@ -334,6 +334,21 @@ textarea.input.short{min-height:84px}
 .tz-x:hover{background:var(--line);color:var(--ink)}
 .res.tzrow{align-items:center}
 .res.tzrow .k{flex:1}
+.chip-x{display:inline-flex;align-items:stretch;gap:0}
+.chip-x .chip{border-top-right-radius:0;border-bottom-right-radius:0;min-width:0}
+.chip-x .x{border:1px solid var(--line);border-left:0;background:var(--field);color:var(--muted);border-radius:0 8px 8px 0;padding:0 10px;cursor:pointer;font-size:1rem}
+.chip-x .x:hover{color:var(--ink);background:var(--line)}
+#split-un{display:flex;flex-direction:column;gap:14px}
+.sp-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+#vat-chips .chip,#cur-pairs .chip{min-width:0}
+.tabs-tools{display:flex;justify-content:flex-end;margin-top:-4px}
+.linkbtn{border:0;background:transparent;color:var(--muted);font:inherit;font-size:.85rem;text-decoration:underline;cursor:pointer;padding:6px 2px;min-height:32px}
+.linkbtn:hover{color:var(--ink)}
+.tabs-edit{display:flex;flex-direction:column;gap:12px;padding:14px;border:1px solid var(--line);background:var(--surface);border-radius:12px}
+.te-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.te-item{display:grid;grid-template-columns:minmax(0,1fr) 40px 40px;gap:6px;align-items:center}
+.te-item .check{min-height:40px;padding:0 10px;border:1px solid var(--line);background:var(--field);border-radius:8px}
+.te-item .icon-btn{min-height:40px;width:40px;font-size:1rem}
 /* sizes */
 #sz-cats .chip{min-width:0}
 /* checklist */
@@ -394,12 +409,18 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     <button class="tab" role="tab" id="tab-sizes" data-tab="sizes" aria-selected="false" aria-controls="panel-sizes">Sizes</button>
     <button class="tab" role="tab" id="tab-sign" data-tab="sign" aria-selected="false" aria-controls="panel-sign">Signature</button>
   </div>
+  <div class="tabs-tools"><button type="button" class="linkbtn" id="tabs-edit-btn" aria-expanded="false" aria-controls="tabs-edit">Edit tabs</button></div>
+  <section class="tabs-edit" id="tabs-edit" aria-label="Edit tabs" hidden>
+    <p class="hint">Move tabs up or down, and untick the ones you do not use. Hidden tabs can always be brought back here.</p>
+    <ul class="te-list" id="te-list"></ul>
+    <div class="btns"><button type="button" class="btn" id="te-reset">Back to the original order</button><button type="button" class="btn primary" id="te-done">Done</button></div>
+  </section>
 
   <!-- VAT -->
   <section class="panel" id="panel-vat" role="tabpanel" aria-labelledby="tab-vat" hidden>
     <h2>VAT calculator</h2>
     <p class="lede">Add VAT to a price, or pull it back out of a total. The UAE standard rate is 5%.</p>
-    <div class="seg" role="group" aria-label="Direction">
+    <div class="seg" id="vat-dir" role="group" aria-label="Direction">
       <button type="button" id="vat-add" aria-pressed="true">Add VAT</button>
       <button type="button" id="vat-remove" aria-pressed="false">Remove VAT</button>
     </div>
@@ -413,6 +434,14 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
         <input class="input mono" id="vat-rate" type="text" inputmode="decimal" placeholder="5" data-ex autocomplete="off">
       </div>
     </div>
+    <div class="chips" id="vat-chips" role="group" aria-label="Common VAT rates">
+      <button type="button" class="chip sm" data-rate="0" aria-pressed="false">0%</button>
+      <button type="button" class="chip sm" data-rate="5" aria-pressed="true">5% UAE</button>
+      <button type="button" class="chip sm" data-rate="12" aria-pressed="false">12% Philippines</button>
+      <button type="button" class="chip sm" data-rate="15" aria-pressed="false">15% Saudi</button>
+      <button type="button" class="chip sm" data-rate="18" aria-pressed="false">18% India</button>
+      <button type="button" class="chip sm" data-rate="20" aria-pressed="false">20% UK</button>
+    </div>
     <div class="results" aria-live="polite">
       <div class="res"><span class="k">Price before VAT</span><span class="num"><span class="unit">AED</span><span id="vat-net">0.00</span></span></div>
       <div class="res"><span class="k" id="vat-vat-label">VAT (5%)</span><span class="num"><span class="unit">AED</span><span id="vat-vat">0.00</span></span></div>
@@ -424,10 +453,24 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   <!-- Split -->
   <section class="panel" id="panel-split" role="tabpanel" aria-labelledby="tab-split">
     <h2>Split the bill</h2>
-    <p class="lede">Add a tip, divide by the table, and round up if nobody wants to deal with fils.</p>
-    <div class="field">
+    <p class="lede">Add a tip, divide by the table, and round up if nobody wants to deal with fils. Or let everyone pay for what they ordered.</p>
+    <div class="seg" id="split-mode" role="group" aria-label="How to split">
+      <button type="button" id="split-m-eq" aria-pressed="true">Equal shares</button>
+      <button type="button" id="split-m-un" aria-pressed="false">Each their own</button>
+    </div>
+    <div class="field" id="split-eq">
       <label class="label" for="split-bill">Bill total (AED)</label>
       <input class="input mono" id="split-bill" type="text" inputmode="decimal" placeholder="480" data-ex autocomplete="off">
+    </div>
+    <div id="split-un" hidden>
+      <div class="field">
+        <span class="label">What each person ordered (AED)</span>
+        <div id="split-rows" style="display:grid;gap:8px"></div>
+      </div>
+      <div class="field">
+        <label class="label" for="split-shared">Shared items, split equally (AED)</label>
+        <input class="input mono" id="split-shared" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
+      </div>
     </div>
     <div class="field">
       <span class="label" id="tip-label">Tip</span>
@@ -448,7 +491,9 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       </div>
     </div>
     <label class="check"><input type="checkbox" id="split-round"> Round each share up to a whole dirham</label>
-    <div class="results" aria-live="polite">
+    <div class="results" id="split-res-un" aria-live="polite" hidden></div>
+    <div class="btns" id="split-copy-wrap" hidden><button type="button" class="btn" id="split-copy">Copy summary</button></div>
+    <div class="results" id="split-res-eq" aria-live="polite">
       <div class="res total"><span class="k">Each person pays</span><span class="num"><span class="unit">AED</span><span id="split-per">0.00</span></span></div>
       <div class="res"><span class="k" id="split-tip-label">Tip (10%)</span><span class="num"><span class="unit">AED</span><span id="split-tip">0.00</span></span></div>
       <div class="res" id="split-extra-row" hidden><span class="k">Extra from rounding up</span><span class="num"><span class="unit">AED</span><span id="split-extra">0.00</span></span></div>
@@ -605,15 +650,21 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <div class="field cur-pick" id="pick-from"><span class="label" id="lbl-from">From</span><select hidden id="cur-from"></select><button type="button" class="input pick-btn" id="pick-from-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lbl-from pick-from-btn"></button><div class="pick-pop" hidden><input type="text" class="input" placeholder="Type a name or code, like peso" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search currencies"><ul class="pick-list" role="listbox"></ul></div></div>
       <div class="field cur-pick" id="pick-to"><span class="label" id="lbl-to">To</span><select hidden id="cur-to"></select><button type="button" class="input pick-btn" id="pick-to-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lbl-to pick-to-btn"></button><div class="pick-pop" hidden><input type="text" class="input" placeholder="Type a name or code, like peso" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search currencies"><ul class="pick-list" role="listbox"></ul></div></div>
     </div>
-    <div class="btns"><button type="button" class="btn" id="cur-swap">Swap currencies</button></div>
+    <div class="btns"><button type="button" class="btn" id="cur-swap">Swap currencies</button><button type="button" class="btn" id="cur-fav">Save this pair</button></div>
+    <div class="chips" id="cur-pairs" role="group" aria-label="Favourite pairs"></div>
     <div class="results" aria-live="polite">
       <div class="res total"><span class="k">Result</span><span class="num" id="cur-out">0</span></div>
     </div>
     <p class="hint" id="cur-line"></p>
     <p class="hint" id="cur-status"></p>
     <div class="split-sec">
-      <h3 class="sec-h">Same amount in the others</h3>
+      <h3 class="sec-h">Same amount in your list</h3>
       <div class="results" id="cur-all" aria-live="polite"></div>
+      <div class="ck-add">
+        <select class="input" id="cur-add" aria-label="Add a currency to the list"></select>
+        <button type="button" class="btn" id="cur-add-btn">Add</button>
+      </div>
+      <div class="btns"><button type="button" class="btn" id="cur-list-reset">Back to the main five</button></div>
     </div>
     <div class="split-sec">
       <h3 class="sec-h">Your rates</h3>
@@ -794,23 +845,36 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   <!-- Sizes -->
   <section class="panel" id="panel-sign" role="tabpanel" aria-labelledby="tab-sign" hidden>
     <h2>Signature maker</h2>
-    <p class="lede">Sign with your finger or mouse and save it as a PNG with a transparent background, ready to drop onto a PDF or document.</p>
-    <div class="sg-pad"><canvas id="sg-canvas" aria-label="Signature drawing area"></canvas><div class="sg-hint" id="sg-hint">Sign here</div></div>
-    <div class="row">
-      <div class="field"><label class="label" for="sg-width">Pen thickness</label><input class="input" type="range" id="sg-width" min="2" max="10" value="4"></div>
-      <div class="field"><span class="label">Ink colour</span>
-        <div class="chips" id="sg-colors" role="group" aria-label="Ink colour">
-          <button type="button" class="chip" data-c="#111111" aria-pressed="true">Black</button>
-          <button type="button" class="chip" data-c="#1F3FBF" aria-pressed="false">Blue</button>
-        </div></div>
+    <p class="lede">Draw your signature or type your name in a signature style, then save it with a transparent background to drop onto a PDF or document.</p>
+    <div class="seg" id="sg-mode" role="group" aria-label="How to make it">
+      <button type="button" id="sg-m-draw" aria-pressed="true">Draw</button>
+      <button type="button" id="sg-m-type" aria-pressed="false">Type my name</button>
     </div>
+    <div id="sg-draw">
+      <div class="sg-pad"><canvas id="sg-canvas" aria-label="Signature drawing area"></canvas><div class="sg-hint" id="sg-hint">Sign here</div></div>
+      <div class="field"><label class="label" for="sg-width">Pen thickness</label><input class="input" type="range" id="sg-width" min="2" max="10" value="4"></div>
+    </div>
+    <div id="sg-type" hidden>
+      <div class="field"><label class="label" for="sg-name">Your name</label><input class="input" id="sg-name" type="text" autocomplete="off" autocapitalize="words" placeholder="Shaheen"></div>
+      <div class="chips" id="sg-fonts" role="group" aria-label="Signature style">
+        <button type="button" class="chip" data-f="Dancing Script" aria-pressed="true" style="font-family:'Dancing Script',cursive;font-size:1.15rem">Flowing</button>
+        <button type="button" class="chip" data-f="Caveat" aria-pressed="false" style="font-family:'Caveat',cursive;font-size:1.25rem">Quick</button>
+        <button type="button" class="chip" data-f="Homemade Apple" aria-pressed="false" style="font-family:'Homemade Apple',cursive">Pen</button>
+      </div>
+    </div>
+    <div class="field"><span class="label">Ink colour</span>
+      <div class="chips" id="sg-colors" role="group" aria-label="Ink colour">
+        <button type="button" class="chip" data-c="#111111" aria-pressed="true">Black</button>
+        <button type="button" class="chip" data-c="#1F3FBF" aria-pressed="false">Blue</button>
+      </div></div>
     <div class="sg-row">
       <button type="button" class="btn" id="sg-undo">Undo</button>
       <button type="button" class="btn" id="sg-clear">Clear</button>
       <a class="btn primary" id="sg-save" download="signature.png" href="#" role="button" aria-disabled="true" style="display:inline-grid;place-items:center;text-decoration:none">Save PNG</a>
+      <a class="btn" id="sg-save-svg" download="signature.svg" href="#" role="button" aria-disabled="true" style="display:inline-grid;place-items:center;text-decoration:none">Save SVG</a>
     </div>
     <div class="sg-prev" id="sg-prevbox" hidden><img id="sg-img" alt="Signature preview"></div>
-    <p class="lede" id="sg-note">If Save PNG does nothing on your phone, press and hold the preview and choose Save image.</p>
+    <p class="lede" id="sg-note">PNG works everywhere. SVG stays sharp at any size and suits print and design apps; it is only available for drawn signatures. If a save button does nothing on your phone, press and hold the preview and choose Save image.</p>
   </section>
   <section class="panel" id="panel-sizes" role="tabpanel" aria-labelledby="tab-sizes" hidden>
     <h2>Size converter</h2>
@@ -821,6 +885,9 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <button type="button" class="chip" data-sz="shoes-k" aria-pressed="false">Kids' shoes</button>
       <button type="button" class="chip" data-sz="cloth-w" aria-pressed="false">Women's clothes</button>
       <button type="button" class="chip" data-sz="cloth-m" aria-pressed="false">Men's clothes</button>
+      <button type="button" class="chip" data-sz="cloth-k" aria-pressed="false">Kids' clothes</button>
+      <button type="button" class="chip" data-sz="hat" aria-pressed="false">Hats</button>
+      <button type="button" class="chip" data-sz="glove" aria-pressed="false">Gloves</button>
       <button type="button" class="chip" data-sz="ring" aria-pressed="false">Rings</button>
     </div>
     <div class="row">
@@ -893,6 +960,61 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   /* ---------- Tabs ---------- */
   var names = ['split', 'units', 'dates', 'percent', 'qr', 'time', 'password', 'compare', 'vat', 'calc', 'currency', 'list', 'sizes', 'sign'];
   var tabs = $$('.tab'), panels = $$('.panel');
+  var TAB_DEFAULT = names.slice(), tabPrefs = { order: TAB_DEFAULT.slice(), hidden: [] };
+  try {
+    var tp = JSON.parse(localStorage.getItem('pb-tabs') || 'null');
+    if (tp && Array.isArray(tp.order)) {
+      var ord = tp.order.filter(function (n) { return TAB_DEFAULT.indexOf(n) >= 0; });
+      TAB_DEFAULT.forEach(function (n) { if (ord.indexOf(n) < 0) ord.push(n); });
+      tabPrefs.order = ord;
+      tabPrefs.hidden = (Array.isArray(tp.hidden) ? tp.hidden : []).filter(function (n) { return TAB_DEFAULT.indexOf(n) >= 0; });
+    }
+  } catch (e) {}
+  function visibleTabs() { return tabs.filter(function (t) { return !t.hidden; }); }
+  function applyTabPrefs() {
+    var row = $('.tabs');
+    tabPrefs.order.forEach(function (n) { row.appendChild($('#tab-' + n)); });
+    tabs.forEach(function (t) { t.hidden = tabPrefs.hidden.indexOf(t.dataset.tab) >= 0; });
+    var cur = tabs.filter(function (t) { return t.getAttribute('aria-selected') === 'true'; })[0];
+    if (cur && cur.hidden) { var v = visibleTabs()[0]; if (v) show(v.dataset.tab); }
+  }
+  function saveTabPrefs() { try { localStorage.setItem('pb-tabs', JSON.stringify(tabPrefs)); } catch (e) {} }
+  var TAB_LABEL = {};
+  tabs.forEach(function (t) { TAB_LABEL[t.dataset.tab] = t.textContent; });
+  function renderTabEditor() {
+    var ul = $('#te-list'); ul.textContent = '';
+    var shownCount = tabPrefs.order.length - tabPrefs.hidden.length;
+    tabPrefs.order.forEach(function (n, i) {
+      var li = document.createElement('li'); li.className = 'te-item';
+      var lab = document.createElement('label'); lab.className = 'check';
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = tabPrefs.hidden.indexOf(n) < 0;
+      cb.disabled = cb.checked && shownCount <= 1;
+      cb.addEventListener('change', function () {
+        tabPrefs.hidden = tabPrefs.hidden.filter(function (h) { return h !== n; });
+        if (!cb.checked) tabPrefs.hidden.push(n);
+        saveTabPrefs(); applyTabPrefs(); renderTabEditor();
+      });
+      lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + TAB_LABEL[n]));
+      function mv(d) {
+        var j = i + d; if (j < 0 || j >= tabPrefs.order.length) return;
+        var t = tabPrefs.order[i]; tabPrefs.order[i] = tabPrefs.order[j]; tabPrefs.order[j] = t;
+        saveTabPrefs(); applyTabPrefs(); renderTabEditor();
+      }
+      var up = document.createElement('button'); up.type = 'button'; up.className = 'icon-btn'; up.textContent = '\u25b2'; up.disabled = i === 0;
+      up.setAttribute('aria-label', 'Move ' + TAB_LABEL[n] + ' up'); up.addEventListener('click', function () { mv(-1); });
+      var dn = document.createElement('button'); dn.type = 'button'; dn.className = 'icon-btn'; dn.textContent = '\u25bc'; dn.disabled = i === tabPrefs.order.length - 1;
+      dn.setAttribute('aria-label', 'Move ' + TAB_LABEL[n] + ' down'); dn.addEventListener('click', function () { mv(1); });
+      li.appendChild(lab); li.appendChild(up); li.appendChild(dn); ul.appendChild(li);
+    });
+  }
+  function toggleTabEditor(open) {
+    $('#tabs-edit').hidden = !open; $('#tabs-edit-btn').setAttribute('aria-expanded', open ? 'true' : 'false');
+    $('#tabs-edit-btn').textContent = open ? 'Close' : 'Edit tabs';
+    if (open) renderTabEditor();
+  }
+  $('#tabs-edit-btn').addEventListener('click', function () { toggleTabEditor($('#tabs-edit').hidden); });
+  $('#te-done').addEventListener('click', function () { toggleTabEditor(false); });
+  $('#te-reset').addEventListener('click', function () { tabPrefs = { order: TAB_DEFAULT.slice(), hidden: [] }; saveTabPrefs(); applyTabPrefs(); renderTabEditor(); });
   function show(name) {
     tabs.forEach(function (t) {
       var on = t.dataset.tab === name;
@@ -902,12 +1024,13 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     panels.forEach(function (p) { p.hidden = p.id !== 'panel-' + name; });
     try { localStorage.setItem('pb-tab', name); } catch (e) {}
   }
-  tabs.forEach(function (t, i) {
+  tabs.forEach(function (t) {
     t.addEventListener('click', function () { show(t.dataset.tab); });
     t.addEventListener('keydown', function (e) {
       var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
       if (!d) return;
-      var next = tabs[(i + d + tabs.length) % tabs.length];
+      var vis = visibleTabs(), i = vis.indexOf(t);
+      var next = vis[(i + d + vis.length) % vis.length];
       show(next.dataset.tab); next.focus(); e.preventDefault();
     });
   });
@@ -930,7 +1053,9 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     $('#vat-amount-label').textContent = vatMode === 'add' ? 'Price before VAT (AED)' : 'Price including VAT (AED)';
     $('#vat-add').setAttribute('aria-pressed', vatMode === 'add');
     $('#vat-remove').setAttribute('aria-pressed', vatMode === 'remove');
+    $$('#vat-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', Math.abs(+c.dataset.rate - rate) < 1e-9 ? 'true' : 'false'); });
   }
+  $$('#vat-chips .chip').forEach(function (c) { c.addEventListener('click', function () { $('#vat-rate').value = c.dataset.rate; renderVat(); }); });
   $('#vat-add').addEventListener('click', function () { vatMode = 'add'; renderVat(); });
   $('#vat-remove').addEventListener('click', function () { vatMode = 'remove'; renderVat(); });
   $('#vat-amount').addEventListener('input', renderVat);
@@ -940,13 +1065,66 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   });
 
   /* ---------- Split ---------- */
-  var tip = 10, people = 4;
+  var tip = 10, people = 4, splitMode = 'eq', spNames = [], spOwn = [];
+  function spRows() {
+    var box = $('#split-rows');
+    if (box.children.length === people) return;
+    box.textContent = '';
+    for (var i = 0; i < people; i++) (function (i) {
+      var row = document.createElement('div'); row.className = 'sp-row';
+      var n = document.createElement('input'); n.className = 'input'; n.type = 'text'; n.placeholder = 'Person ' + (i + 1);
+      n.setAttribute('aria-label', 'Name of person ' + (i + 1)); n.autocomplete = 'off'; n.value = spNames[i] || '';
+      var m = document.createElement('input'); m.className = 'input mono'; m.type = 'text'; m.inputMode = 'decimal'; m.placeholder = '0';
+      m.setAttribute('aria-label', 'Amount for person ' + (i + 1)); m.autocomplete = 'off'; m.value = spOwn[i] || '';
+      n.addEventListener('input', function () { spNames[i] = n.value; renderSplit(); });
+      m.addEventListener('input', function () { spOwn[i] = m.value; renderSplit(); });
+      row.appendChild(n); row.appendChild(m); box.appendChild(row);
+    })(i);
+  }
+  var spLines = [];
   function renderSplit() {
+    var uneven = splitMode === 'un';
+    $('#split-m-eq').setAttribute('aria-pressed', !uneven);
+    $('#split-m-un').setAttribute('aria-pressed', uneven);
+    $('#split-eq').hidden = uneven; $('#split-un').hidden = !uneven;
+    $('#split-res-eq').hidden = uneven; $('#split-res-un').hidden = !uneven;
+    $('#split-copy-wrap').hidden = !uneven;
+    $('#split-people').textContent = people;
+    $$('#tip-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', +c.dataset.tip === tip ? 'true' : 'false'); });
+    var roundUp = $('#split-round').checked;
+    if (uneven) {
+      spRows();
+      var shared = num($('#split-shared').value), box = $('#split-res-un');
+      box.textContent = ''; spLines = [];
+      var sumOwn = 0, sumTip = 0, sumPay = 0;
+      for (var i = 0; i < people; i++) {
+        var own = num(spOwn[i] || '') + shared / people, t = own * tip / 100, pay = own + t;
+        if (roundUp) pay = Math.ceil(pay - 1e-9);
+        sumOwn += own; sumTip += t; sumPay += pay;
+        var name = (spNames[i] || '').trim() || 'Person ' + (i + 1);
+        spLines.push([name, pay]);
+        var row = document.createElement('div'); row.className = 'res';
+        var k = document.createElement('span'); k.className = 'k'; k.textContent = name;
+        var nm = document.createElement('span'); nm.className = 'num';
+        var u = document.createElement('span'); u.className = 'unit'; u.textContent = 'AED ';
+        var v = document.createElement('span'); v.textContent = fmt(pay);
+        nm.appendChild(u); nm.appendChild(v); row.appendChild(k); row.appendChild(nm); box.appendChild(row);
+      }
+      [['Tip (' + tip + '%)', sumTip], ['Table total', sumPay]].forEach(function (x, j) {
+        var row = document.createElement('div'); row.className = 'res' + (j ? ' total' : '');
+        var k = document.createElement('span'); k.className = 'k'; k.textContent = x[0];
+        var nm = document.createElement('span'); nm.className = 'num';
+        var u = document.createElement('span'); u.className = 'unit'; u.textContent = 'AED ';
+        var v = document.createElement('span'); v.textContent = fmt(x[1]);
+        nm.appendChild(u); nm.appendChild(v); row.appendChild(k); row.appendChild(nm); box.appendChild(row);
+      });
+      return;
+    }
     var bill = num($('#split-bill').value);
     var tipAmt = bill * tip / 100;
     var total = bill + tipAmt;
     var per = total / people, extra = 0;
-    if ($('#split-round').checked) {
+    if (roundUp) {
       var up = Math.ceil(per - 1e-9);
       extra = (up - per) * people;
       per = up;
@@ -957,14 +1135,18 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     $('#split-total').textContent = fmt(per * people);
     $('#split-extra').textContent = fmt(extra);
     $('#split-extra-row').hidden = extra < 0.005;
-    $('#split-people').textContent = people;
-    $$('#tip-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', +c.dataset.tip === tip ? 'true' : 'false'); });
   }
   $('#split-bill').addEventListener('input', renderSplit);
+  $('#split-shared').addEventListener('input', renderSplit);
   $('#split-round').addEventListener('change', renderSplit);
+  $('#split-m-eq').addEventListener('click', function () { splitMode = 'eq'; renderSplit(); });
+  $('#split-m-un').addEventListener('click', function () { splitMode = 'un'; renderSplit(); });
   $$('#tip-chips .chip').forEach(function (c) { c.addEventListener('click', function () { tip = +c.dataset.tip; renderSplit(); }); });
   $('#people-minus').addEventListener('click', function () { people = Math.max(1, people - 1); renderSplit(); });
   $('#people-plus').addEventListener('click', function () { people = Math.min(50, people + 1); renderSplit(); });
+  $('#split-copy').addEventListener('click', function () {
+    copyText(spLines.map(function (l) { return l[0] + ': AED ' + fmt(l[1]); }).join('\n') + '\nTotal: AED ' + fmt(spLines.reduce(function (a, l) { return a + l[1]; }, 0)), this);
+  });
 
   /* ---------- Units ---------- */
   var UNITS = {
@@ -1320,6 +1502,18 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     pickers.push(api);
   }
   function refreshPickers() { pickers.forEach(function (p) { p.refresh(); }); }
+  var CUR_MAIN5 = ['AED', 'USD', 'PHP', 'IDR', 'INR'];
+  var curShow = CUR_MAIN5.slice(), curPairs = [['AED', 'PHP'], ['AED', 'INR'], ['AED', 'IDR'], ['USD', 'AED']];
+  (function () {
+    var known = function (c) { return CUR.some(function (x) { return x[0] === c; }); };
+    try {
+      var l = JSON.parse(localStorage.getItem('pb-curlist') || 'null');
+      if (Array.isArray(l)) curShow = l.filter(function (c) { return typeof c === 'string' && known(c); });
+      var p = JSON.parse(localStorage.getItem('pb-pairs') || 'null');
+      if (Array.isArray(p)) curPairs = p.filter(function (q) { return Array.isArray(q) && known(q[0]) && known(q[1]); }).map(function (q) { return [q[0], q[1]]; });
+    } catch (e) {}
+  })();
+  function curSaveLists() { try { localStorage.setItem('pb-curlist', JSON.stringify(curShow)); localStorage.setItem('pb-pairs', JSON.stringify(curPairs)); } catch (e) {} }
   function renderCurrency() {
     refreshPickers();
     var amount = num($('#cur-amount').value);
@@ -1328,13 +1522,32 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     $('#cur-line').textContent = '1 ' + from + ' = ' + fmtN(convertCur(1, from, to)) + ' ' + to;
     var box = $('#cur-all');
     box.textContent = '';
-    CUR.forEach(function (c) {
-      if (c[0] === from || !(c[3] || c[0] === to)) return;
+    curShow.forEach(function (code) {
+      if (code === from) return;
       var row = document.createElement('div'); row.className = 'res tzrow';
-      var k = document.createElement('span'); k.className = 'k'; k.textContent = c[0] + ' · ' + c[1];
-      var n = document.createElement('span'); n.className = 'num'; n.textContent = money(convertCur(amount, from, c[0]), c[0]);
-      row.appendChild(k); row.appendChild(n); box.appendChild(row);
+      var k = document.createElement('span'); k.className = 'k'; k.textContent = curName(code).replace(' \u2013 ', ' \u00b7 ');
+      var n = document.createElement('span'); n.className = 'num'; n.textContent = money(convertCur(amount, from, code), code);
+      var x = document.createElement('button'); x.type = 'button'; x.className = 'tz-x'; x.textContent = '\u00d7'; x.setAttribute('aria-label', 'Remove ' + code + ' from the list');
+      x.addEventListener('click', function () { curShow = curShow.filter(function (c) { return c !== code; }); curSaveLists(); renderCurrency(); });
+      row.appendChild(k); row.appendChild(n); row.appendChild(x); box.appendChild(row);
     });
+    if (!curShow.some(function (c) { return c !== from; })) { var e = document.createElement('p'); e.className = 'hint'; e.textContent = 'Your list is empty. Add a currency below.'; box.appendChild(e); }
+    var addSel = $('#cur-add'); addSel.textContent = '';
+    CUR.forEach(function (c) { if (curShow.indexOf(c[0]) >= 0) return; var o = document.createElement('option'); o.value = c[0]; o.textContent = c[0] + ' \u2013 ' + c[1]; addSel.appendChild(o); });
+    $('#cur-add-btn').disabled = !addSel.options.length;
+    var pairs = $('#cur-pairs'); pairs.textContent = '';
+    curPairs.forEach(function (p, i) {
+      var w = document.createElement('span'); w.className = 'chip-x';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'chip sm'; c.textContent = p[0] + ' \u2192 ' + p[1];
+      c.setAttribute('aria-pressed', p[0] === from && p[1] === to ? 'true' : 'false');
+      c.addEventListener('click', function () { $('#cur-from').value = p[0]; $('#cur-to').value = p[1]; renderCurrency(); });
+      var x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.textContent = '\u00d7'; x.setAttribute('aria-label', 'Remove ' + p[0] + ' to ' + p[1]);
+      x.addEventListener('click', function () { curPairs.splice(i, 1); curSaveLists(); renderCurrency(); });
+      w.appendChild(c); w.appendChild(x); pairs.appendChild(w);
+    });
+    var saved = curPairs.some(function (p) { return p[0] === from && p[1] === to; });
+    $('#cur-fav').textContent = saved ? 'Pair saved' : 'Save ' + from + ' \u2192 ' + to;
+    $('#cur-fav').disabled = saved || from === to;
     $('#cur-status').textContent = baseLabel + '.';
     $('#cur-note').textContent = ratesEdited()
       ? 'You have set your own rate for some currencies. They stay on this device, and the rest follow the latest rates.'
@@ -1388,6 +1601,14 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   $('#cur-amount').addEventListener('input', renderCurrency);
   $('#cur-from').addEventListener('change', renderCurrency);
   $('#cur-to').addEventListener('change', renderCurrency);
+  $('#cur-add-btn').addEventListener('click', function () {
+    var v = $('#cur-add').value; if (v && curShow.indexOf(v) < 0) { curShow.push(v); curSaveLists(); renderCurrency(); }
+  });
+  $('#cur-list-reset').addEventListener('click', function () { curShow = CUR_MAIN5.slice(); curSaveLists(); renderCurrency(); });
+  $('#cur-fav').addEventListener('click', function () {
+    var f = $('#cur-from').value, t = $('#cur-to').value;
+    if (f !== t && !curPairs.some(function (p) { return p[0] === f && p[1] === t; })) { curPairs.push([f, t]); curSaveLists(); renderCurrency(); }
+  });
   $('#cur-swap').addEventListener('click', function () {
     var f = $('#cur-from').value;
     $('#cur-from').value = $('#cur-to').value;
@@ -2149,7 +2370,26 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   // [label, UK, US, EU, bust or chest cm]
   var SZ_CLOTH_W = [['XS', 6, 2, 34, 82], ['S', 8, 4, 36, 86], ['S/M', 10, 6, 38, 90], ['M', 12, 8, 40, 94], ['L', 14, 10, 42, 98], ['XL', 16, 12, 44, 102], ['XXL', 18, 14, 46, 106], ['3XL', 20, 16, 48, 110]];
   var SZ_CLOTH_M = [['XS', 34, 34, 44, 86], ['S', 36, 36, 46, 91], ['M', 38, 38, 48, 97], ['L', 40, 40, 50, 102], ['XL', 42, 42, 52, 107], ['XXL', 44, 44, 54, 112], ['3XL', 46, 46, 56, 117]];
+  // [age, height cm, EU (= height), US]
+  var SZ_CLOTH_K = [['3 months', 62, 62, '3M'], ['6 months', 68, 68, '6M'], ['9 months', 74, 74, '9M'], ['12 months', 80, 80, '12M'], ['18 months', 86, 86, '18M'], ['2 years', 92, 92, '2T'], ['3 years', 98, 98, '3T'], ['4 years', 104, 104, '4T'], ['5 years', 110, 110, '5'], ['6 years', 116, 116, '6'], ['7 years', 122, 122, '7'], ['8 years', 128, 128, '8'], ['9 years', 134, 134, '9'], ['10 years', 140, 140, '10'], ['11 years', 146, 146, '11'], ['12 years', 152, 152, '12'], ['13 years', 158, 158, '13'], ['14 years', 164, 164, '14']];
+  function frac8(x) {
+    var w = Math.floor(x + 1e-9), e = Math.round((x - w) * 8);
+    if (e === 8) { w++; e = 0; }
+    var F = ['', ' 1/8', ' 1/4', ' 3/8', ' 1/2', ' 5/8', ' 3/4', ' 7/8'];
+    return w + F[e];
+  }
+  // [head cm, letter, US, UK]
+  var SZ_HAT = szRange(52, 64, 1).map(function (cm) {
+    var us = Math.round(cm / 7.9796 * 8) / 8, uk = us - 0.125;
+    var L = cm <= 54 ? 'XS' : cm <= 56 ? 'S' : cm <= 58 ? 'M' : cm <= 60 ? 'L' : cm <= 62 ? 'XL' : 'XXL';
+    return [cm, L, frac8(us), frac8(uk)];
+  });
+  // [hand girth in inches (EU and US glove size), letter, hand girth cm]
+  var SZ_GLOVE = [[6, 'XS', 15.2], [6.5, 'XS', 16.5], [7, 'S', 17.8], [7.5, 'S/M', 19.1], [8, 'M', 20.3], [8.5, 'M/L', 21.6], [9, 'L', 22.9], [9.5, 'L/XL', 24.1], [10, 'XL', 25.4], [10.5, 'XXL', 26.7], [11, 'XXL', 27.9]];
   var SZ = {
+    'cloth-k': { sys: ['Age', 'Height (cm)', 'EU', 'US'], rows: SZ_CLOTH_K, note: 'Kids\' clothes are sized by height, so go by height rather than age. Children grow at different speeds, and brands differ. If between sizes, pick the bigger one.' },
+    'hat': { sys: ['Head (cm)', 'Letter', 'US', 'UK'], rows: SZ_HAT, note: 'To measure, wrap a soft tape round the head, just above the eyebrows and ears. Fitted caps use US or UK sizes. Others use the letter.' },
+    'glove': { sys: ['Hand girth (in)', 'Letter', 'Hand girth (cm)'], rows: SZ_GLOVE, note: 'To measure, wrap a tape round the widest part of the palm, below the knuckles and not counting the thumb. The number in inches is the glove size in the EU and US. Brands vary a little.' },
     'shoes-m': { sys: ['EU', 'US', 'UK', 'Foot length (cm)'], rows: SZ_SHOE_M, note: 'Men\'s adult sizes. US and UK differ by about one size. Foot length is the heel to the longest toe.' },
     'shoes-w': { sys: ['EU', 'US', 'UK', 'Foot length (cm)'], rows: SZ_SHOE_W, note: 'Women\'s adult sizes. Between sizes, most people go up.' },
     'shoes-k': { sys: ['EU', 'US', 'UK', 'Foot length (cm)'], rows: SZ_SHOE_K, note: 'Kids\' sizes are worked out from foot length and are only approximate. Measure the foot, and leave about 1 cm of growing room.' },
@@ -2198,74 +2438,6 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     row.appendChild(k); row.appendChild(n); return row;
   }
   function renderSizes() {
-    /* ---- signature ---- */
-  var sgCv = $('#sg-canvas'), sgCtx = sgCv.getContext('2d'), sgStrokes = [], sgCur = null, sgColor = '#111111';
-  function sgSize() {
-    var w = sgCv.clientWidth || 320, h = sgCv.clientHeight || 200, r = window.devicePixelRatio || 1;
-    sgCv.width = Math.round(w * r); sgCv.height = Math.round(h * r);
-    sgCtx.setTransform(r, 0, 0, r, 0, 0); sgDraw();
-  }
-  function sgDraw() {
-    var w = sgCv.clientWidth || 320, h = sgCv.clientHeight || 200;
-    sgCtx.clearRect(0, 0, w, h);
-    sgCtx.lineCap = 'round'; sgCtx.lineJoin = 'round';
-    sgStrokes.forEach(function (st) {
-      sgCtx.strokeStyle = st.c; sgCtx.fillStyle = st.c; sgCtx.lineWidth = st.w;
-      var p = st.p;
-      if (p.length === 1) { sgCtx.beginPath(); sgCtx.arc(p[0][0], p[0][1], st.w / 2, 0, Math.PI * 2); sgCtx.fill(); return; }
-      sgCtx.beginPath(); sgCtx.moveTo(p[0][0], p[0][1]);
-      for (var i = 1; i < p.length - 1; i++) {
-        sgCtx.quadraticCurveTo(p[i][0], p[i][1], (p[i][0] + p[i + 1][0]) / 2, (p[i][1] + p[i + 1][1]) / 2);
-      }
-      sgCtx.lineTo(p[p.length - 1][0], p[p.length - 1][1]); sgCtx.stroke();
-    });
-  }
-  function sgPt(e) { var b = sgCv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; }
-  function sgExport() {
-    var save = $('#sg-save'), box = $('#sg-prevbox');
-    if (!sgStrokes.length) {
-      $('#sg-hint').hidden = false; box.hidden = true;
-      save.setAttribute('aria-disabled', 'true'); save.removeAttribute('href'); return;
-    }
-    $('#sg-hint').hidden = true;
-    var minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9, pad = 12;
-    sgStrokes.forEach(function (st) { st.p.forEach(function (q) {
-      minx = Math.min(minx, q[0] - st.w); miny = Math.min(miny, q[1] - st.w);
-      maxx = Math.max(maxx, q[0] + st.w); maxy = Math.max(maxy, q[1] + st.w);
-    }); });
-    var sc = 2, w = Math.max(10, maxx - minx + pad * 2), h = Math.max(10, maxy - miny + pad * 2);
-    var out = document.createElement('canvas'); out.width = Math.round(w * sc); out.height = Math.round(h * sc);
-    var c = out.getContext('2d'); c.scale(sc, sc); c.translate(pad - minx, pad - miny);
-    c.lineCap = 'round'; c.lineJoin = 'round';
-    sgStrokes.forEach(function (st) {
-      c.strokeStyle = st.c; c.fillStyle = st.c; c.lineWidth = st.w; var p = st.p;
-      if (p.length === 1) { c.beginPath(); c.arc(p[0][0], p[0][1], st.w / 2, 0, Math.PI * 2); c.fill(); return; }
-      c.beginPath(); c.moveTo(p[0][0], p[0][1]);
-      for (var i = 1; i < p.length - 1; i++) c.quadraticCurveTo(p[i][0], p[i][1], (p[i][0] + p[i + 1][0]) / 2, (p[i][1] + p[i + 1][1]) / 2);
-      c.lineTo(p[p.length - 1][0], p[p.length - 1][1]); c.stroke();
-    });
-    var url = out.toDataURL('image/png');
-    $('#sg-img').src = url; box.hidden = false;
-    save.href = url; save.setAttribute('aria-disabled', 'false');
-  }
-  sgCv.addEventListener('pointerdown', function (e) {
-    e.preventDefault();
-    try { sgCv.setPointerCapture(e.pointerId); } catch (x) {}
-    sgCur = { c: sgColor, w: +$('#sg-width').value, p: [sgPt(e)] }; sgStrokes.push(sgCur); sgDraw();
-  });
-  sgCv.addEventListener('pointermove', function (e) {
-    if (!sgCur) return; e.preventDefault(); sgCur.p.push(sgPt(e)); sgDraw();
-  });
-  function sgEnd() { if (!sgCur) return; sgCur = null; sgExport(); }
-  sgCv.addEventListener('pointerup', sgEnd); sgCv.addEventListener('pointercancel', sgEnd);
-  $('#sg-undo').addEventListener('click', function () { sgStrokes.pop(); sgDraw(); sgExport(); });
-  $('#sg-clear').addEventListener('click', function () { sgStrokes = []; sgDraw(); sgExport(); });
-  $('#sg-save').addEventListener('click', function (e) { if (!sgStrokes.length) e.preventDefault(); });
-  $$('#sg-colors .chip').forEach(function (b) { b.addEventListener('click', function () {
-    sgColor = b.dataset.c; $$('#sg-colors .chip').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
-  }); });
-  window.addEventListener('resize', sgSize);
-  var sgTab = $('#tab-sign'); if (sgTab) sgTab.addEventListener('click', function () { setTimeout(sgSize, 0); });
   $$('#sz-cats .chip').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.sz === szCat ? 'true' : 'false'); });
     var out = $('#sz-out'); out.textContent = '';
     if (szCat === 'ring') {
@@ -2289,6 +2461,125 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   $$('#sz-cats .chip').forEach(function (c) { c.addEventListener('click', function () { szCat = c.dataset.sz; szRefresh(true); }); });
   $('#sz-sys').addEventListener('change', function () { szSysIdx = +this.value; szOptions(); renderSizes(); });
   $('#sz-val').addEventListener('change', renderSizes);
+
+  /* ---------- Signature ---------- */
+  var sgCv = $('#sg-canvas'), sgCtx = sgCv.getContext('2d'), sgStrokes = [], sgCur = null, sgColor = '#111111', sgMode = 'draw', sgFont = 'Dancing Script';
+  function sgStrokePath(c, st) {
+    var p = st.p;
+    if (p.length === 1) { c.beginPath(); c.arc(p[0][0], p[0][1], st.w / 2, 0, Math.PI * 2); c.fill(); return; }
+    c.beginPath(); c.moveTo(p[0][0], p[0][1]);
+    for (var i = 1; i < p.length - 1; i++) c.quadraticCurveTo(p[i][0], p[i][1], (p[i][0] + p[i + 1][0]) / 2, (p[i][1] + p[i + 1][1]) / 2);
+    c.lineTo(p[p.length - 1][0], p[p.length - 1][1]); c.stroke();
+  }
+  function sgSize() {
+    var w = sgCv.clientWidth || 320, h = sgCv.clientHeight || 200, r = window.devicePixelRatio || 1;
+    sgCv.width = Math.round(w * r); sgCv.height = Math.round(h * r);
+    sgCtx.setTransform(r, 0, 0, r, 0, 0); sgDraw();
+  }
+  function sgDraw() {
+    sgCtx.clearRect(0, 0, sgCv.clientWidth || 320, sgCv.clientHeight || 200);
+    sgCtx.lineCap = 'round'; sgCtx.lineJoin = 'round';
+    sgStrokes.forEach(function (st) { sgCtx.strokeStyle = st.c; sgCtx.fillStyle = st.c; sgCtx.lineWidth = st.w; sgStrokePath(sgCtx, st); });
+  }
+  function sgPt(e) { var b = sgCv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; }
+  function sgSetOut(png, svg) {
+    var box = $('#sg-prevbox'), a = $('#sg-save'), v = $('#sg-save-svg');
+    function on(el, url) { if (url) { el.href = url; el.setAttribute('aria-disabled', 'false'); } else { el.removeAttribute('href'); el.setAttribute('aria-disabled', 'true'); } }
+    if (png) { $('#sg-img').src = png; box.hidden = false; } else box.hidden = true;
+    on(a, png); on(v, svg);
+  }
+  function sgSvg() {
+    var minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9, pad = 12;
+    sgStrokes.forEach(function (st) { st.p.forEach(function (q) {
+      minx = Math.min(minx, q[0] - st.w); miny = Math.min(miny, q[1] - st.w);
+      maxx = Math.max(maxx, q[0] + st.w); maxy = Math.max(maxy, q[1] + st.w);
+    }); });
+    var w = Math.max(10, maxx - minx + pad * 2), h = Math.max(10, maxy - miny + pad * 2), ox = pad - minx, oy = pad - miny;
+    var r1 = function (n) { return (Math.round(n * 10) / 10); };
+    var out = '<svg xmlns="http://www.w3.org/2000/svg" width="' + r1(w) + '" height="' + r1(h) + '" viewBox="0 0 ' + r1(w) + ' ' + r1(h) + '">';
+    sgStrokes.forEach(function (st) {
+      var p = st.p.map(function (q) { return [q[0] + ox, q[1] + oy]; });
+      if (p.length === 1) { out += '<circle cx="' + r1(p[0][0]) + '" cy="' + r1(p[0][1]) + '" r="' + r1(st.w / 2) + '" fill="' + st.c + '"/>'; return; }
+      var d = 'M' + r1(p[0][0]) + ' ' + r1(p[0][1]);
+      for (var i = 1; i < p.length - 1; i++) d += 'Q' + r1(p[i][0]) + ' ' + r1(p[i][1]) + ' ' + r1((p[i][0] + p[i + 1][0]) / 2) + ' ' + r1((p[i][1] + p[i + 1][1]) / 2);
+      d += 'L' + r1(p[p.length - 1][0]) + ' ' + r1(p[p.length - 1][1]);
+      out += '<path d="' + d + '" fill="none" stroke="' + st.c + '" stroke-width="' + st.w + '" stroke-linecap="round" stroke-linejoin="round"/>';
+    });
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out + '</svg>');
+  }
+  function sgExportDraw() {
+    if (!sgStrokes.length) { $('#sg-hint').hidden = false; sgSetOut(null, null); return; }
+    $('#sg-hint').hidden = true;
+    var minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9, pad = 12;
+    sgStrokes.forEach(function (st) { st.p.forEach(function (q) {
+      minx = Math.min(minx, q[0] - st.w); miny = Math.min(miny, q[1] - st.w);
+      maxx = Math.max(maxx, q[0] + st.w); maxy = Math.max(maxy, q[1] + st.w);
+    }); });
+    var sc = 2, w = Math.max(10, maxx - minx + pad * 2), h = Math.max(10, maxy - miny + pad * 2);
+    var out = document.createElement('canvas'); out.width = Math.round(w * sc); out.height = Math.round(h * sc);
+    var c = out.getContext('2d'); c.scale(sc, sc); c.translate(pad - minx, pad - miny);
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    sgStrokes.forEach(function (st) { c.strokeStyle = st.c; c.fillStyle = st.c; c.lineWidth = st.w; sgStrokePath(c, st); });
+    sgSetOut(out.toDataURL('image/png'), sgSvg());
+  }
+  function sgExportType() {
+    var name = $('#sg-name').value.trim();
+    if (!name) { sgSetOut(null, null); return; }
+    var px = 160, font = '600 ' + px + 'px "' + sgFont + '", cursive';
+    var c = document.createElement('canvas'); c.width = 3200; c.height = 420;
+    var x = c.getContext('2d'); x.font = font; x.textBaseline = 'middle';
+    var tw = Math.ceil(x.measureText(name).width) + 80;
+    c.width = Math.min(Math.max(tw, 100), 6000); x = c.getContext('2d');
+    x.font = font; x.textBaseline = 'middle'; x.fillStyle = sgColor; x.fillText(name, 40, 210);
+    var d, img;
+    try { d = x.getImageData(0, 0, c.width, c.height); } catch (e) { return; }
+    var minx = c.width, miny = c.height, maxx = -1, maxy = -1, i, j;
+    for (j = 0; j < c.height; j++) for (i = 0; i < c.width; i++) if (d.data[(j * c.width + i) * 4 + 3] > 8) { if (i < minx) minx = i; if (i > maxx) maxx = i; if (j < miny) miny = j; if (j > maxy) maxy = j; }
+    if (maxx < 0) { sgSetOut(null, null); return; }
+    var pad = 20, o = document.createElement('canvas'); o.width = maxx - minx + 1 + pad * 2; o.height = maxy - miny + 1 + pad * 2;
+    o.getContext('2d').drawImage(c, minx, miny, maxx - minx + 1, maxy - miny + 1, pad, pad, maxx - minx + 1, maxy - miny + 1);
+    sgSetOut(o.toDataURL('image/png'), null);
+  }
+  function sgExport() { if (sgMode === 'draw') sgExportDraw(); else sgExportType(); }
+  function sgRenderType() {
+    // wait for the chosen font, so the first picture is not drawn in a plain fallback
+    var done = function () { sgExportType(); };
+    try { if (document.fonts && document.fonts.load) { document.fonts.load('600 60px "' + sgFont + '"', $('#sg-name').value || 'A').then(done, done); return; } } catch (e) {}
+    done();
+  }
+  function sgApplyMode() {
+    var t = sgMode === 'type';
+    $('#sg-m-draw').setAttribute('aria-pressed', !t); $('#sg-m-type').setAttribute('aria-pressed', t);
+    $('#sg-draw').hidden = t; $('#sg-type').hidden = !t; $('#sg-undo').hidden = t;
+    if (t) sgRenderType(); else { sgSize(); sgExportDraw(); }
+  }
+  sgCv.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    try { sgCv.setPointerCapture(e.pointerId); } catch (x) {}
+    sgCur = { c: sgColor, w: +$('#sg-width').value, p: [sgPt(e)] }; sgStrokes.push(sgCur); sgDraw();
+  });
+  sgCv.addEventListener('pointermove', function (e) {
+    if (!sgCur) return; e.preventDefault(); sgCur.p.push(sgPt(e)); sgDraw();
+  });
+  function sgEnd() { if (!sgCur) return; sgCur = null; sgExportDraw(); }
+  sgCv.addEventListener('pointerup', sgEnd); sgCv.addEventListener('pointercancel', sgEnd);
+  $('#sg-m-draw').addEventListener('click', function () { sgMode = 'draw'; sgApplyMode(); });
+  $('#sg-m-type').addEventListener('click', function () { sgMode = 'type'; sgApplyMode(); });
+  $('#sg-name').addEventListener('input', sgRenderType);
+  $$('#sg-fonts .chip').forEach(function (b) { b.addEventListener('click', function () {
+    sgFont = b.dataset.f; $$('#sg-fonts .chip').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); }); sgRenderType();
+  }); });
+  $('#sg-undo').addEventListener('click', function () { sgStrokes.pop(); sgDraw(); sgExportDraw(); });
+  $('#sg-clear').addEventListener('click', function () {
+    if (sgMode === 'type') { $('#sg-name').value = ''; sgExportType(); } else { sgStrokes = []; sgDraw(); sgExportDraw(); }
+  });
+  ['#sg-save', '#sg-save-svg'].forEach(function (id) { $(id).addEventListener('click', function (e) { if (this.getAttribute('aria-disabled') === 'true') e.preventDefault(); }); });
+  $$('#sg-colors .chip').forEach(function (b) { b.addEventListener('click', function () {
+    sgColor = b.dataset.c; $$('#sg-colors .chip').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+    if (sgMode === 'type') sgExportType();
+  }); });
+  window.addEventListener('resize', sgSize);
+  var sgTab = $('#tab-sign'); if (sgTab) sgTab.addEventListener('click', function () { setTimeout(sgSize, 0); });
 
   /* ---------- Checklist ---------- */
   var ckItems = [];
@@ -2337,9 +2628,62 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   })();
 
   renderVat(); renderSplit(); fillUnitSelects(); renderUnits(); initDates(); renderPercent(); fillCurrency(); renderCurrency(); loadRates(); renderQR(); initTime(); renderCalc(); cmpBuild(); ckRender(); szRefresh(true); renderPassword();
+  /* ---------- Remember the last settings ---------- */
+  // Saves which option buttons, drop-downs, ticks and sliders were chosen (never typed text), and puts them back next visit.
+  var UI_KEY = 'pb-ui';
+  var UI_SKIP = { 'tz-zone': 1, 'sz-sys': 1, 'sz-val': 1, 'cur-add': 1, 'unit-from': 0, 'unit-to': 0 };
+  function uiGroups() { return $$('.chips, .seg').filter(function (g) { return g.id && !/^(cur-peg-chips|cur-pairs|cmp-kinds|dt-days-chips|dt-presets)$/.test(g.id) && !g.closest('#panel-compare'); }); }
+  function uiCollect() {
+    var o = { g: {}, s: {}, c: {}, r: {}, p: people };
+    uiGroups().forEach(function (g) {
+      var on = $$('button', g).filter(function (b) { return b.getAttribute('aria-pressed') === 'true'; })[0];
+      if (on) o.g[g.id] = on.textContent.trim();
+    });
+    $$('select[id]').forEach(function (e) { if (!UI_SKIP[e.id]) o.s[e.id] = e.value; });
+    $$('input[type=checkbox][id]').forEach(function (e) { o.c[e.id] = e.checked; });
+    $$('input[type=range][id]').forEach(function (e) { o.r[e.id] = e.value; });
+    return o;
+  }
+  var uiTimer = null, uiRestoring = false;
+  function uiSave() {
+    if (uiRestoring) return;
+    clearTimeout(uiTimer);
+    uiTimer = setTimeout(function () { try { localStorage.setItem(UI_KEY, JSON.stringify(uiCollect())); } catch (e) {} }, 250);
+  }
+  function uiRestore() {
+    var o = null;
+    try { o = JSON.parse(localStorage.getItem(UI_KEY) || 'null'); } catch (e) {}
+    if (!o || typeof o !== 'object') return;
+    uiRestoring = true;
+    try {
+      uiGroups().forEach(function (g) {
+        var want = o.g && o.g[g.id]; if (!want) return;
+        var b = $$('button', g).filter(function (x) { return x.textContent.trim() === want; })[0];
+        if (b && b.getAttribute('aria-pressed') !== 'true') b.click();
+      });
+      if (typeof o.p === 'number') { var guard = 0; while (people < o.p && guard++ < 60) $('#people-plus').click(); while (people > o.p && guard++ < 120) $('#people-minus').click(); }
+      Object.keys(o.s || {}).forEach(function (id) {
+        var e = $('#' + id); if (!e || UI_SKIP[id]) return;
+        if ([].some.call(e.options, function (op) { return op.value === o.s[id]; })) { e.value = o.s[id]; e.dispatchEvent(new Event('change', { bubbles: true })); }
+      });
+      Object.keys(o.c || {}).forEach(function (id) { var e = $('#' + id); if (e && e.checked !== !!o.c[id]) { e.checked = !!o.c[id]; e.dispatchEvent(new Event('change', { bubbles: true })); } });
+      Object.keys(o.r || {}).forEach(function (id) { var e = $('#' + id); if (e) { e.value = o.r[id]; e.dispatchEvent(new Event('input', { bubbles: true })); } });
+    } catch (e) {}
+    uiRestoring = false;
+  }
+  uiRestore();
+  document.addEventListener('change', uiSave); document.addEventListener('click', uiSave);
+
+  applyTabPrefs();
   var saved = null;
   try { saved = localStorage.getItem('pb-tab'); } catch (e) {}
-  show(names.indexOf(saved) >= 0 ? saved : names[0]);
+  var firstVis = visibleTabs()[0];
+  show(names.indexOf(saved) >= 0 && !$('#tab-' + saved).hidden ? saved : (firstVis ? firstVis.dataset.tab : names[0]));
+
+  // Lets the page open with no signal after the first visit.
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
 })();
 </script>
 
