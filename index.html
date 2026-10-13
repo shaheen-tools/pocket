@@ -349,6 +349,13 @@ textarea.input.short{min-height:84px}
 .te-item{display:grid;grid-template-columns:minmax(0,1fr) 40px 40px;gap:6px;align-items:center}
 .te-item .check{min-height:40px;padding:0 10px;border:1px solid var(--line);background:var(--field);border-radius:8px}
 .te-item .icon-btn{min-height:40px;width:40px;font-size:1rem}
+.vat-cats{display:grid;gap:8px}
+.vat-cat{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:start;text-align:left;padding:10px 12px;border:1px solid var(--line);background:var(--field);border-radius:10px;color:var(--ink);font:inherit;cursor:pointer;min-height:48px}
+.vat-cat:hover{border-color:var(--ink)}
+.vat-cat b{font-family:var(--font-mono);font-size:1.05rem}
+.vat-cat small{display:block;color:var(--muted);font-size:.82rem;line-height:1.35;margin-top:2px}
+.vat-cat[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.vat-cat[aria-pressed="true"] small{color:inherit;opacity:.8}
 /* sizes */
 #sz-cats .chip{min-width:0}
 /* checklist */
@@ -419,7 +426,11 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   <!-- VAT -->
   <section class="panel" id="panel-vat" role="tabpanel" aria-labelledby="tab-vat" hidden>
     <h2>VAT calculator</h2>
-    <p class="lede">Add VAT to a price, or pull it back out of a total. The UAE standard rate is 5%.</p>
+    <p class="lede" id="vat-lede">Add VAT to a price, or pull it back out of a total. The UAE standard rate is 5%.</p>
+    <div class="seg" id="vat-region" role="group" aria-label="Which tax">
+      <button type="button" id="vat-r-uae" aria-pressed="true">UAE and others</button>
+      <button type="button" id="vat-r-in" aria-pressed="false">India GST</button>
+    </div>
     <div class="seg" id="vat-dir" role="group" aria-label="Direction">
       <button type="button" id="vat-add" aria-pressed="true">Add VAT</button>
       <button type="button" id="vat-remove" aria-pressed="false">Remove VAT</button>
@@ -430,7 +441,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
         <input class="input mono" id="vat-amount" type="text" inputmode="decimal" placeholder="1250" data-ex autocomplete="off">
       </div>
       <div class="field">
-        <label class="label" for="vat-rate">VAT rate (%)</label>
+        <label class="label" for="vat-rate" id="vat-rate-label">VAT rate (%)</label>
         <input class="input mono" id="vat-rate" type="text" inputmode="decimal" placeholder="5" data-ex autocomplete="off">
       </div>
     </div>
@@ -442,11 +453,18 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <button type="button" class="chip sm" data-rate="18" aria-pressed="false">18% India</button>
       <button type="button" class="chip sm" data-rate="20" aria-pressed="false">20% UK</button>
     </div>
-    <div class="results" aria-live="polite">
-      <div class="res"><span class="k">Price before VAT</span><span class="num"><span class="unit">AED</span><span id="vat-net">0.00</span></span></div>
-      <div class="res"><span class="k" id="vat-vat-label">VAT (5%)</span><span class="num"><span class="unit">AED</span><span id="vat-vat">0.00</span></span></div>
-      <div class="res total"><span class="k">Total with VAT</span><span class="num"><span class="unit">AED</span><span id="vat-gross">0.00</span></span></div>
+    <div class="field" id="vat-in" hidden>
+      <span class="label" id="vat-in-label">What are you selling or buying?</span>
+      <div class="vat-cats" id="vat-cats" role="group" aria-labelledby="vat-in-label"></div>
+      <p class="hint">Rates changed in September 2025 and a few products are still an exception. Check the product's HSN code or ask your accountant for anything important.</p>
     </div>
+    <div class="results" aria-live="polite">
+      <div class="res"><span class="k" id="vat-net-label">Price before VAT</span><span class="num"><span class="unit vat-unit">AED</span><span id="vat-net">0.00</span></span></div>
+      <div class="res"><span class="k" id="vat-vat-label">VAT (5%)</span><span class="num"><span class="unit vat-unit">AED</span><span id="vat-vat">0.00</span></span></div>
+      <div class="res" id="vat-cgst-row" hidden><span class="k" id="vat-cgst-label">CGST + SGST (same state)</span><span class="num"><span class="unit vat-unit">INR</span><span id="vat-cgst">0.00</span></span></div>
+      <div class="res total"><span class="k" id="vat-gross-label">Total with VAT</span><span class="num"><span class="unit vat-unit">AED</span><span id="vat-gross">0.00</span></span></div>
+    </div>
+    <p class="hint" id="vat-igst" hidden></p>
     <div class="btns"><button type="button" class="btn" id="vat-copy">Copy summary</button></div>
   </section>
 
@@ -1043,25 +1061,75 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     var net = amount / (1 + r);
     return { net: net, vat: amount - net, gross: amount };
   }
+  var vatRegion = 'uae', vatCat = 4;
+  var IN_GST = [
+    [0, 'Exempt', 'Fresh vegetables and fruit, milk, eggs, unbranded flour and rice, printed books'],
+    [0.25, 'Rough diamonds', 'Rough, unpolished diamonds'],
+    [3, 'Gold and jewellery', 'Gold, silver, jewellery (making charges are taxed at 5%)'],
+    [5, 'Everyday items and basic services', 'Tea, coffee, sugar, edible oil, clothes and footwear up to \u20b92,500, hotel rooms up to \u20b97,500, restaurants, economy flights'],
+    [18, 'Most goods and services', 'Phones, laptops, TVs, ACs, cement, clothes and footwear above \u20b92,500, business class flights, consulting and professional services'],
+    [40, 'Luxury and sin goods', 'Tobacco, pan masala, fizzy and sugary drinks, high-end cars, large motorbikes']
+  ];
+  function renderVatCats() {
+    var box = $('#vat-cats'); box.textContent = '';
+    IN_GST.forEach(function (c, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'vat-cat';
+      b.setAttribute('aria-pressed', i === vatCat ? 'true' : 'false');
+      var r = document.createElement('b'); r.textContent = c[0] + '%';
+      var t = document.createElement('span'); t.appendChild(document.createTextNode(c[1]));
+      var sm = document.createElement('small'); sm.textContent = c[2]; t.appendChild(sm);
+      b.appendChild(r); b.appendChild(t);
+      b.addEventListener('click', function () { vatCat = i; $('#vat-rate').value = String(c[0]); renderVat(); });
+      box.appendChild(b);
+    });
+  }
+  function vatSetRegion(r) {
+    if (r === vatRegion) return;
+    vatRegion = r;
+    $('#vat-rate').value = r === 'in' ? String(IN_GST[vatCat][0]) : '5';
+    renderVat();
+  }
   function renderVat() {
+    var inr = vatRegion === 'in', tax = inr ? 'GST' : 'VAT', cur = inr ? 'INR' : 'AED';
     var a = num($('#vat-amount').value), rate = num($('#vat-rate').value);
     var x = calcVat(a, rate, vatMode);
     $('#vat-net').textContent = fmt(x.net);
     $('#vat-vat').textContent = fmt(x.vat);
     $('#vat-gross').textContent = fmt(x.gross);
-    $('#vat-vat-label').textContent = 'VAT (' + String(+rate.toFixed(2)) + '%)';
-    $('#vat-amount-label').textContent = vatMode === 'add' ? 'Price before VAT (AED)' : 'Price including VAT (AED)';
+    var rt = String(+rate.toFixed(2));
+    $('#vat-vat-label').textContent = tax + ' (' + rt + '%)';
+    $('#vat-amount-label').textContent = (vatMode === 'add' ? 'Price before ' + tax : 'Price including ' + tax) + ' (' + cur + ')';
+    $('#vat-net-label').textContent = 'Price before ' + tax;
+    $('#vat-gross-label').textContent = 'Total with ' + tax;
+    $('#vat-rate-label').textContent = tax + ' rate (%)';
+    $$('.vat-unit').forEach(function (u) { u.textContent = cur; });
+    $('#vat-lede').textContent = inr ? 'Add GST to a price, or pull it back out of a total. Pick the kind of product and the rate fills in.' : 'Add VAT to a price, or pull it back out of a total. The UAE standard rate is 5%.';
+    $('#vat-r-uae').setAttribute('aria-pressed', !inr); $('#vat-r-in').setAttribute('aria-pressed', inr);
+    $('#vat-in').hidden = !inr; $('#vat-chips').hidden = inr;
+    $('#vat-cgst-row').hidden = !inr; $('#vat-igst').hidden = !inr;
+    if (inr) {
+      var half = String(+(rate / 2).toFixed(3));
+      $('#vat-cgst-label').textContent = 'CGST ' + half + '% + SGST ' + half + '% (same state)';
+      $('#vat-cgst').textContent = fmt(x.vat / 2) + ' + ' + fmt(x.vat / 2);
+      $('#vat-igst').textContent = 'Selling to another state? It is one IGST of ' + rt + '% instead, which comes to INR ' + fmt(x.vat) + '.';
+      // keep the highlighted kind in step if the rate was typed by hand
+      if (Math.abs(IN_GST[vatCat][0] - rate) > 1e-9) { var m = -1; IN_GST.forEach(function (c, i) { if (m < 0 && Math.abs(c[0] - rate) < 1e-9) m = i; }); vatCat = m; }
+      renderVatCats();
+    }
     $('#vat-add').setAttribute('aria-pressed', vatMode === 'add');
     $('#vat-remove').setAttribute('aria-pressed', vatMode === 'remove');
     $$('#vat-chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', Math.abs(+c.dataset.rate - rate) < 1e-9 ? 'true' : 'false'); });
   }
+  $('#vat-r-uae').addEventListener('click', function () { vatSetRegion('uae'); });
+  $('#vat-r-in').addEventListener('click', function () { vatSetRegion('in'); });
   $$('#vat-chips .chip').forEach(function (c) { c.addEventListener('click', function () { $('#vat-rate').value = c.dataset.rate; renderVat(); }); });
   $('#vat-add').addEventListener('click', function () { vatMode = 'add'; renderVat(); });
   $('#vat-remove').addEventListener('click', function () { vatMode = 'remove'; renderVat(); });
   $('#vat-amount').addEventListener('input', renderVat);
   $('#vat-rate').addEventListener('input', renderVat);
   $('#vat-copy').addEventListener('click', function () {
-    copyText('Before VAT: AED ' + $('#vat-net').textContent + ' | ' + $('#vat-vat-label').textContent + ': AED ' + $('#vat-vat').textContent + ' | Total: AED ' + $('#vat-gross').textContent, this);
+    var cur = vatRegion === 'in' ? 'INR' : 'AED', tax = vatRegion === 'in' ? 'GST' : 'VAT';
+    copyText('Before ' + tax + ': ' + cur + ' ' + $('#vat-net').textContent + ' | ' + $('#vat-vat-label').textContent + ': ' + cur + ' ' + $('#vat-vat').textContent + ' | Total: ' + cur + ' ' + $('#vat-gross').textContent, this);
   });
 
   /* ---------- Split ---------- */
@@ -2632,7 +2700,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   // Saves which option buttons, drop-downs, ticks and sliders were chosen (never typed text), and puts them back next visit.
   var UI_KEY = 'pb-ui';
   var UI_SKIP = { 'tz-zone': 1, 'sz-sys': 1, 'sz-val': 1, 'cur-add': 1, 'unit-from': 0, 'unit-to': 0 };
-  function uiGroups() { return $$('.chips, .seg').filter(function (g) { return g.id && !/^(cur-peg-chips|cur-pairs|cmp-kinds|dt-days-chips|dt-presets)$/.test(g.id) && !g.closest('#panel-compare'); }); }
+  function uiGroups() { return $$('.chips, .seg, .vat-cats').filter(function (g) { return g.id && !/^(cur-peg-chips|cur-pairs|cmp-kinds|dt-days-chips|dt-presets)$/.test(g.id) && !g.closest('#panel-compare'); }); }
   function uiCollect() {
     var o = { g: {}, s: {}, c: {}, r: {}, p: people };
     uiGroups().forEach(function (g) {
