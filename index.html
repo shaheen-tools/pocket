@@ -949,7 +949,39 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
 (function () {
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-  var fmt = function (n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var fmt = function (n, lakh) { return n.toLocaleString(lakh ? 'en-IN' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  // Lakh and crore style grouping (12,34,567) for the rupee and its neighbours; thousands and millions (1,234,567) for the rest.
+  var LAKH = { INR: 1, PKR: 1, BDT: 1, NPR: 1, LKR: 1 };
+  var NATIVE_VAL = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  function groupInt(digits, lakh) {
+    if (digits.length <= 3) return digits;
+    if (!lakh) return digits.replace(/\B(?=(\d{3})+$)/g, ',');
+    return digits.slice(0, -3).replace(/\B(?=(\d{2})+$)/g, ',') + ',' + digits.slice(-3);
+  }
+  function groupTyped(raw, lakh) {
+    var neg = /^\s*-/.test(raw), t = raw.replace(/[^0-9.]/g, ''), dot = t.indexOf('.'), ip, dp = '';
+    if (dot >= 0) { ip = t.slice(0, dot); dp = '.' + t.slice(dot + 1).replace(/\./g, ''); } else ip = t;
+    ip = ip.replace(/^0+(?=\d)/, '');
+    return (neg ? '-' : '') + groupInt(ip, lakh) + dp;
+  }
+  function liveCommas(el, lakhFn) {
+    el.addEventListener('input', function () {
+      var old = NATIVE_VAL.get.call(el), pos = el.selectionStart == null ? old.length : el.selectionStart;
+      var keep = old.slice(0, pos).replace(/[^0-9.]/g, '').length;
+      var nu = groupTyped(old, lakhFn());
+      if (nu === old) return;
+      NATIVE_VAL.set.call(el, nu);
+      var n = 0, i = 0;
+      while (i < nu.length && n < keep) { if (/[0-9.]/.test(nu.charAt(i))) n++; i++; }
+      try { el.setSelectionRange(i, i); } catch (e) {}
+    });
+  }
+  function regroup(el, lakh) {
+    if (document.activeElement === el) return;
+    var raw = NATIVE_VAL.get.call(el); if (!raw) return;
+    var nu = groupTyped(raw, lakh);
+    if (nu !== raw) NATIVE_VAL.set.call(el, nu);
+  }
   var num = function (v) { var n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) && n >= 0 ? n : 0; };
 
   function copyText(text, btn, inputEl) {
@@ -1090,12 +1122,13 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     renderVat();
   }
   function renderVat() {
-    var inr = vatRegion === 'in', tax = inr ? 'GST' : 'VAT', cur = inr ? 'INR' : 'AED';
+    var inr = vatRegion === 'in', L = inr, tax = inr ? 'GST' : 'VAT', cur = inr ? 'INR' : 'AED';
     var a = num($('#vat-amount').value), rate = num($('#vat-rate').value);
     var x = calcVat(a, rate, vatMode);
-    $('#vat-net').textContent = fmt(x.net);
-    $('#vat-vat').textContent = fmt(x.vat);
-    $('#vat-gross').textContent = fmt(x.gross);
+    regroup($('#vat-amount'), L);
+    $('#vat-net').textContent = fmt(x.net, L);
+    $('#vat-vat').textContent = fmt(x.vat, L);
+    $('#vat-gross').textContent = fmt(x.gross, L);
     var rt = String(+rate.toFixed(2));
     $('#vat-vat-label').textContent = tax + ' (' + rt + '%)';
     $('#vat-amount-label').textContent = (vatMode === 'add' ? 'Price before ' + tax : 'Price including ' + tax) + ' (' + cur + ')';
@@ -1144,6 +1177,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       n.setAttribute('aria-label', 'Name of person ' + (i + 1)); n.autocomplete = 'off'; n.value = spNames[i] || '';
       var m = document.createElement('input'); m.className = 'input mono'; m.type = 'text'; m.inputMode = 'decimal'; m.placeholder = '0';
       m.setAttribute('aria-label', 'Amount for person ' + (i + 1)); m.autocomplete = 'off'; m.value = spOwn[i] || '';
+      liveCommas(m, function () { return false; });
       n.addEventListener('input', function () { spNames[i] = n.value; renderSplit(); });
       m.addEventListener('input', function () { spOwn[i] = m.value; renderSplit(); });
       row.appendChild(n); row.appendChild(m); box.appendChild(row);
@@ -1486,7 +1520,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     CUR.forEach(function (c) { if (c[0] === code) d = c[2]; });
     var a = Math.abs(x);
     if (a > 0 && a < 1) d = d === 0 ? 2 : Math.max(d, 4);
-    return x.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+    return x.toLocaleString(LAKH[code] ? 'en-IN' : 'en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
   function convertCur(amount, from, to) { return amount / rates[from] * rates[to]; }
   function setRateInputs(skipKey, skipPeg) {
@@ -1584,6 +1618,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   function curSaveLists() { try { localStorage.setItem('pb-curlist', JSON.stringify(curShow)); localStorage.setItem('pb-pairs', JSON.stringify(curPairs)); } catch (e) {} }
   function renderCurrency() {
     refreshPickers();
+    regroup($('#cur-amount'), !!LAKH[$('#cur-from').value]);
     var amount = num($('#cur-amount').value);
     var from = $('#cur-from').value, to = $('#cur-to').value;
     $('#cur-out').textContent = money(convertCur(amount, from, to), to) + ' ' + to;
@@ -2682,6 +2717,16 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   $('#ck-new').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ckAdd(); } });
   $('#ck-clear-done').addEventListener('click', function () { ckItems = ckItems.filter(function (x) { return !x.d; }); ckSave(); ckRender(); });
   $('#ck-clear-all').addEventListener('click', function () { ckItems = []; ckSave(); ckRender(); });
+
+  // Commas while typing in the amount fields.
+  liveCommas($('#vat-amount'), function () { return vatRegion === 'in'; });
+  liveCommas($('#split-bill'), function () { return false; });
+  liveCommas($('#split-shared'), function () { return false; });
+  liveCommas($('#cur-amount'), function () { return !!LAKH[$('#cur-from').value]; });
+  liveCommas($('#unit-value'), function () { return false; });
+  ['a', 'b', 'c', 'd', 'e', 'f'].forEach(function (k) { liveCommas($('#pc-' + k), function () { return false; }); });
+  liveCommas($('#pc-cost'), function () { return false; });
+  liveCommas($('#pc-price'), function () { return false; });
 
   // A field left empty uses its grey example, so tools always show a result and nobody has to delete text first.
   (function () {
