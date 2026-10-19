@@ -965,8 +965,9 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     ip = ip.replace(/^0+(?=\d)/, '');
     return (neg ? '-' : '') + groupInt(ip, lakh) + dp;
   }
-  function liveCommas(el, lakhFn) {
+  function liveCommas(el, lakhFn, skipFn) {
     el.addEventListener('input', function () {
+      if (skipFn && skipFn()) return;
       var old = NATIVE_VAL.get.call(el), pos = el.selectionStart == null ? old.length : el.selectionStart;
       var keep = old.slice(0, pos).replace(/[^0-9.]/g, '').length;
       var nu = groupTyped(old, lakhFn());
@@ -1253,13 +1254,27 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
 
   /* ---------- Units ---------- */
   var UNITS = {
-    length: { val: 6, def: ['ft', 'cm'], list: [['mm', 0.001], ['cm', 0.01], ['m', 1], ['km', 1000], ['in', 0.0254], ['ft', 0.3048], ['yd', 0.9144], ['mi', 1609.344]] },
+    length: { val: 6, def: ['ft', 'cm'], list: [['mm', 0.001], ['cm', 0.01], ['m', 1], ['km', 1000], ['in', 0.0254], ['ft', 0.3048], ['ft & in', 0.3048], ['yd', 0.9144], ['mi', 1609.344]] },
     weight: { val: 2.5, def: ['lb', 'kg'], list: [['g', 0.001], ['kg', 1], ['oz', 0.028349523125], ['lb', 0.45359237], ['tola', 0.0116638038]], note: 'A tola is the traditional gold weight, about 11.66 g.' },
     volume: { val: 1, def: ['cup', 'ml'], list: [['ml', 0.001], ['L', 1], ['tsp', 0.00492892159375], ['tbsp', 0.01478676478125], ['cup', 0.2365882365], ['fl oz', 0.0295735295625], ['gal', 3.785411784]], note: 'Cups, spoons, fluid ounces and gallons are the US sizes.' },
     temp: { val: 40, def: ['°C', '°F'], list: [['°C'], ['°F'], ['K']] }
   };
   var unitCat = 'length';
   var sNum = function (v) { var n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : NaN; };
+  var FTIN = 'ft & in';
+  // "5 11", "5'11", "5 ft 11 in" and "5.5" all work: the first number is feet, the second is inches.
+  function parseFtIn(v) {
+    var m = String(v).replace(/,/g, '').match(/\d+(?:\.\d+)?|\.\d+/g);
+    if (!m) return NaN;
+    var ft = parseFloat(m[0]), inch = m.length > 1 ? parseFloat(m[1]) : 0;
+    return ft + inch / 12;
+  }
+  function fmtFtIn(feet) {
+    var neg = feet < 0, tot = Math.round(Math.abs(feet) * 12 * 10) / 10;
+    var ft = Math.floor(tot / 12 + 1e-9), inch = Math.round((tot - ft * 12) * 10) / 10;
+    if (inch >= 12) { ft += 1; inch = 0; }
+    return (neg ? '-' : '') + ft + ' ft ' + String(+inch.toFixed(1)) + ' in';
+  }
   function fmtN(x) {
     if (!isFinite(x)) return '—';
     var a = Math.abs(x);
@@ -1291,21 +1306,41 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       sel.value = u.def[i];
     });
     $('#unit-value').value = u.val;
+    prevFrom = u.def[0];
     $('#unit-note').textContent = u.note || '';
   }
+  var prevFrom = '';
   function renderUnits() {
     $$('#unit-cats .chip').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.cat === unitCat ? 'true' : 'false'); });
-    var v = sNum($('#unit-value').value), from = $('#unit-from').value, to = $('#unit-to').value;
-    if (isNaN(v)) { $('#unit-out').textContent = '—'; $('#unit-line').textContent = 'Enter a number to convert.'; return; }
+    var from = $('#unit-from').value, to = $('#unit-to').value, inp = $('#unit-value');
+    var ftIn = from === FTIN;
+    inp.placeholder = ftIn ? '5 ft 11 in' : String(UNITS[unitCat].val);
+    inp.inputMode = ftIn ? 'text' : 'decimal';
+    var v = ftIn ? parseFtIn(inp.value) : sNum(inp.value);
+    if (isNaN(v)) { $('#unit-out').textContent = '\u2014'; $('#unit-line').textContent = ftIn ? 'Type feet then inches, like 5 11 or 5 ft 11 in.' : 'Enter a number to convert.'; return; }
     var r = convertUnit(v, from, to);
-    $('#unit-out').textContent = fmtN(r) + ' ' + to;
-    $('#unit-line').textContent = fmtN(v) + ' ' + from + ' = ' + fmtN(r) + ' ' + to;
+    var shownIn = ftIn ? fmtFtIn(v) : fmtN(v) + ' ' + from;
+    var shownOut = to === FTIN ? fmtFtIn(r) : fmtN(r) + ' ' + to;
+    $('#unit-out').textContent = shownOut;
+    $('#unit-line').textContent = shownIn + ' = ' + shownOut;
+  }
+  // Switching the "from" unit to or from feet-and-inches rewrites the number so it keeps its meaning.
+  function unitFromChanged() {
+    var from = $('#unit-from').value, inp = $('#unit-value');
+    if (prevFrom !== FTIN && from === FTIN) {
+      var n = sNum(inp.value);
+      if (!isNaN(n) && n >= 0) inp.value = fmtFtIn(convertUnit(n, prevFrom, 'ft'));
+    } else if (prevFrom === FTIN && from !== FTIN) {
+      var f = parseFtIn(inp.value);
+      if (!isNaN(f)) inp.value = String(+convertUnit(f, 'ft', from).toFixed(4));
+    }
+    prevFrom = from; renderUnits();
   }
   $$('#unit-cats .chip').forEach(function (c) {
     c.addEventListener('click', function () { unitCat = c.dataset.cat; fillUnitSelects(); renderUnits(); });
   });
   $('#unit-value').addEventListener('input', renderUnits);
-  $('#unit-from').addEventListener('change', renderUnits);
+  $('#unit-from').addEventListener('change', unitFromChanged);
   $('#unit-to').addEventListener('change', renderUnits);
   $('#unit-swap').addEventListener('click', function () {
     var f = $('#unit-from').value;
@@ -2724,7 +2759,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   liveCommas($('#split-bill'), function () { return false; });
   liveCommas($('#split-shared'), function () { return false; });
   liveCommas($('#cur-amount'), function () { return !!LAKH[$('#cur-from').value]; });
-  liveCommas($('#unit-value'), function () { return false; });
+  liveCommas($('#unit-value'), function () { return false; }, function () { return $('#unit-from').value === FTIN; });
   ['a', 'b', 'c', 'd', 'e', 'f'].forEach(function (k) { liveCommas($('#pc-' + k), function () { return false; }); });
   liveCommas($('#pc-cost'), function () { return false; });
   liveCommas($('#pc-price'), function () { return false; });
