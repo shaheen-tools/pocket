@@ -893,7 +893,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <a class="btn" id="sg-save-svg" download="signature.svg" href="#" role="button" aria-disabled="true" style="display:inline-grid;place-items:center;text-decoration:none">Save SVG</a>
     </div>
     <div class="sg-prev" id="sg-prevbox" hidden><img id="sg-img" alt="Signature preview"></div>
-    <p class="lede" id="sg-note">PNG works everywhere. SVG stays sharp at any size and suits print and design apps; it is only available for drawn signatures. If a save button does nothing on your phone, press and hold the preview and choose Save image.</p>
+    <p class="lede" id="sg-note">PNG works everywhere. SVG stays sharp at any size and suits print and design apps; it is only available for drawn signatures. On iPhone and iPad, Save opens the share sheet, where you can choose Save Image or Save to Files. If a save button does nothing, press and hold the preview and choose Save image.</p>
   </section>
   <section class="panel" id="panel-sizes" role="tabpanel" aria-labelledby="tab-sizes" hidden>
     <h2>Size converter</h2>
@@ -2712,7 +2712,34 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   $('#sg-clear').addEventListener('click', function () {
     if (sgMode === 'type') { $('#sg-name').value = ''; sgExportType(); } else { sgStrokes = []; sgDraw(); sgExportDraw(); }
   });
-  ['#sg-save', '#sg-save-svg'].forEach(function (id) { $(id).addEventListener('click', function (e) { if (this.getAttribute('aria-disabled') === 'true') e.preventDefault(); }); });
+  // iPhone and iPad ignore the download link on a picture made in the page, so they get the share sheet (Save Image, Save to Files).
+  var IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function dataToBlob(url) {
+    var i = url.indexOf(','), head = url.slice(0, i), body = url.slice(i + 1);
+    var type = (head.match(/^data:([^;,]+)/) || [])[1] || 'application/octet-stream', bin;
+    if (/;base64/.test(head)) { bin = atob(body); } else { bin = decodeURIComponent(body); }
+    if (/;base64/.test(head)) { var u = new Uint8Array(bin.length); for (var k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k); return new Blob([u], { type: type }); }
+    return new Blob([bin], { type: type });
+  }
+  function sgSave(a, e) {
+    e.preventDefault();
+    var url = a.getAttribute('href');
+    if (a.getAttribute('aria-disabled') === 'true' || !url) return;
+    var name = a.getAttribute('download') || 'signature.png', blob;
+    try { blob = dataToBlob(url); } catch (x) { return; }
+    var file = null;
+    try { file = new File([blob], name, { type: blob.type }); } catch (x) {}
+    if (IS_IOS && file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: 'Signature' }).catch(function () {});
+      return;
+    }
+    var obj = URL.createObjectURL(blob), l = document.createElement('a');
+    l.href = obj; l.download = name; l.style.display = 'none';
+    document.body.appendChild(l); l.click();
+    setTimeout(function () { l.remove(); URL.revokeObjectURL(obj); }, 4000);
+    if (IS_IOS) { $('#sg-note').textContent = 'Press and hold the picture above and choose Save to Photos or Add to Photos.'; }
+  }
+  ['#sg-save', '#sg-save-svg'].forEach(function (id) { $(id).addEventListener('click', function (e) { sgSave(this, e); }); });
   $$('#sg-colors .chip').forEach(function (b) { b.addEventListener('click', function () {
     sgColor = b.dataset.c; $$('#sg-colors .chip').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
     if (sgMode === 'type') sgExportType();
